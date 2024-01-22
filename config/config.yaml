@@ -1,0 +1,8 @@
+env: "local"
+filesconfig:
+dbconfig:
+  host: "localhost"
+  port: "5432"
+  database: "osya"
+  user: "osya"
+  password: "password"
