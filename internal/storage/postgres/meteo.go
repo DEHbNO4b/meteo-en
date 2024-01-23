@@ -15,7 +15,7 @@ type MeteoDB struct {
 	db  *sql.DB
 }
 
-func NewMeteo(log *slog.Logger, db *sql.DB) (*MeteoDB, error) {
+func NewMeteoDB(log *slog.Logger, db *sql.DB) (*MeteoDB, error) {
 
 	if db == nil {
 		return nil, ErrInvalidDB

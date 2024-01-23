@@ -3,34 +3,33 @@ package models
 import "time"
 
 type MeteoData struct {
-	Date         time.Time
 	Time         time.Time
-	TempOut      float32
-	HiTemp       float32
-	LowTemp      float32
+	TempOut      float64
+	HiTemp       float64
+	LowTemp      float64
 	OutHum       int
-	DewPt        float32
-	WindSpeed    float32
+	DewPt        float64
+	WindSpeed    float64
 	WindDir      string
-	WindRun      float32
-	HiSpeed      float32
+	WindRun      float64
+	HiSpeed      float64
 	HiDir        string
-	WindChill    float32
-	HeatIndex    float32
-	THWIndex     float32
-	Bar          float32
-	Rain         float32
-	RainRate     float32
-	HeatD_D      float32
-	CoolD_D      float32
-	InTemp       float32
-	InHum        float32
-	InDew        float32
-	InHeat       float32
-	InEMC        float32
-	InAirDensity float32
-	WindSamp     float32
-	WindTx       float32
-	ISSRecept    float32
+	WindChill    float64
+	HeatIndex    float64
+	THWIndex     float64
+	Bar          float64
+	Rain         float64
+	RainRate     float64
+	HeatD_D      float64
+	CoolD_D      float64
+	InTemp       float64
+	InHum        float64
+	InDew        float64
+	InHeat       float64
+	InEMC        float64
+	InAirDensity float64
+	WindSamp     float64
+	WindTx       float64
+	ISSRecept    float64
 	ArcInt       int
 }

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/fs"
+	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/domain/models"
 	source "meteo-lightning/internal/filesource"
 	"os"
@@ -17,7 +18,7 @@ type MeteoSource struct {
 	template string
 }
 
-func New(p, t string) (MeteoSource, error) {
+func NewMeteo(p, t string) (MeteoSource, error) {
 
 	if p == "" || t == "" {
 		return MeteoSource{}, source.ErrEmptyDataSource
@@ -52,7 +53,7 @@ func (m *MeteoSource) Search() ([]string, error) {
 	return names, err
 }
 
-func (m *MeteoSource) Read(path string) ([]models.MeteoData, error) {
+func Data(path string) ([]models.MeteoData, error) {
 
 	data := make([]models.MeteoData, 100)
 	file, err := os.Open(path)
@@ -62,6 +63,10 @@ func (m *MeteoSource) Read(path string) ([]models.MeteoData, error) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+
+	scanner.Scan() // пропускаем две строки с названием столбцов
+	scanner.Scan()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		meteoLine, err := parseLine(line)
@@ -70,9 +75,13 @@ func (m *MeteoSource) Read(path string) ([]models.MeteoData, error) {
 			fmt.Println("\t", err)
 			continue
 		}
-		fmt.Printf("%v\n", meteoLine)
+		// fmt.Printf("%v\n", meteoLine)
+		dmd, err := meteoToDomain(meteoLine)
+		if err != nil {
+			fmt.Printf("unable to convert meteo data to domain: %v\n", err)
+		}
 
-		// data = append(data, meteoLine)
+		data = append(data, dmd)
 	}
 	return data, nil
 }
@@ -90,11 +99,31 @@ func parseLine(l string) (meteoData, error) {
 	md.Time = rec[1]
 	md.TempOut = rec[2]
 	md.WindSpeed = rec[7]
+	md.WindDir = rec[8]
 	md.WindRun = rec[9]
-	md.Bar = rec[15]
+	md.WindChill = rec[12]
+	md.Bar = rec[16]
 	md.Rain = rec[16]
 	md.RainRate = rec[17]
 
 	return md, nil
 
+}
+
+func Files() ([]string, error) {
+	//load config
+	cfg := config.MustLoadCfg()
+
+	// Create meteo file sorce struct
+	ms, err := NewMeteo(cfg.Fcfg.MeteoPath, cfg.Fcfg.MeteoTemplate)
+	if err != nil {
+		return nil, err
+	}
+
+	// search files with meteo data
+	files, err := ms.Search()
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }
