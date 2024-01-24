@@ -67,6 +67,8 @@ func Data(path string) ([]models.MeteoData, error) {
 	scanner.Scan() // пропускаем две строки с названием столбцов
 	scanner.Scan()
 
+	fileName := filepath.Base(path)
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		meteoLine, err := parseLine(line)
@@ -80,6 +82,7 @@ func Data(path string) ([]models.MeteoData, error) {
 		if err != nil {
 			fmt.Printf("unable to convert meteo data to domain: %v\n", err)
 		}
+		dmd.Station = fileName
 
 		data = append(data, dmd)
 	}

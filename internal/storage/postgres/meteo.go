@@ -35,5 +35,9 @@ func NewMeteoDB(log *slog.Logger, dsn string) (*MeteoDB, error) {
 }
 
 func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) error {
-
+	tx, err := mdb.db.BeginTx(ctx, nil)
+	for _, el := range data {
+		_, err := tx.ExecContext(ctx,
+			"INSERT INTO ")
+	}
 }

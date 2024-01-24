@@ -1,6 +1,7 @@
 package meteofile
 
 type meteoData struct {
+	FileName     string
 	Date         string
 	Time         string
 	TempOut      string

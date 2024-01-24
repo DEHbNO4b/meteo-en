@@ -15,9 +15,6 @@ type MeteoStore interface {
 	SaveMeteoData(ctx context.Context, data []models.MeteoData) error
 }
 
-// type LightningProvider interface {
-// }
-
 func main() {
 
 	err := run()
@@ -29,32 +26,34 @@ func main() {
 
 func run() error {
 
-	//load config
-	cfg := config.MustLoadCfg()
+	ctx := context.Background() //ctx
 
-	//log
-	log := sl.SetupLogger(cfg.Env)
+	cfg := config.MustLoadCfg() //load config
 
-	// DB
-	meteoDB, err := postgres.NewMeteoDB(log, cfg.DBconfig.ToString())
+	log := sl.SetupLogger(cfg.Env) //log
+
+	meteoDB, err := postgres.NewMeteoDB(log, cfg.DBconfig.ToString()) // DB
 	if err != nil {
 		return err
 	}
 
-	// MeteoService
-	meteoservice.NewService(meteoDB)
+	mserv := meteoservice.NewService(meteoDB) // MeteoService
 
-	// search files with meteo data
-	files, err := meteofile.Files()
+	files, err := meteofile.Files() // search files with meteo data
 	if err != nil {
 		return err
 	}
+
 	for _, el := range files {
 		data, err := meteofile.Data(el)
 		if err != nil {
 			fmt.Printf("unable to read meteodata %v\n", err)
 		}
 
+		err = mserv.SaveMeteoData(ctx, data)
+		if err != nil {
+			log.Error("unable to save data", err)
+		}
 	}
 
 	return nil

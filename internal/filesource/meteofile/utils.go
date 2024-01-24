@@ -61,6 +61,7 @@ func meteoToDomain(md meteoData) (models.MeteoData, error) {
 		chill = math.NaN()
 	}
 
+	dmd.Station = md.FileName
 	dmd.Time = time
 	dmd.TempOut = temp
 	dmd.WindSpeed = speed
