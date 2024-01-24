@@ -26,7 +26,7 @@ func makeStroke(rec []string) (stroke, error) {
 
 	s := stroke{}
 
-	if rec[0] == "Облако-облако" {
+	if len(rec[0]) == 13 {
 		s.Cloud = true
 	}
 

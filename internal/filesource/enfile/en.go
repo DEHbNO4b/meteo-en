@@ -95,10 +95,11 @@ func Data(path string) ([]models.StrokeEN, error) {
 	}
 
 	for _, el := range strings[1:] {
-		// if len(el) != 8 {
-		// 	fmt.Println("wrong string data: ", el)
-		// 	continue
-		// }
+
+		if len(el) != 8 {
+			fmt.Println("wrong string data: ", el)
+			continue
+		}
 
 		stroke, err := makeStroke(el)
 		if err != nil {

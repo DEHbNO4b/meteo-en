@@ -5,17 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"meteo-lightning/internal/config"
-	"meteo-lightning/internal/domain/models"
 	"meteo-lightning/internal/filesource/enfile"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/services/enservice"
 	"meteo-lightning/internal/storage/postgres"
 	"time"
 )
-
-type EnStore interface {
-	SaveEnData(ctx context.Context, data []models.StrokeEN) error
-}
 
 func main() {
 
@@ -47,9 +42,11 @@ func run() error {
 	}
 
 	for _, el := range files {
+
 		data, err := enfile.Data(el)
+
 		if err != nil {
-			fmt.Printf("unable to read meteodata %v\n", err)
+			fmt.Printf("unable to read en data %v\n", err)
 			continue
 		}
 
@@ -58,10 +55,10 @@ func run() error {
 		t := time.Now()
 		err = enSrv.SaveEnData(ctx, data)
 		if err != nil {
-			log.Error("unable to save data", err)
+			log.Error("unable to save en data", err)
 			continue
 		}
-		log.Info("saved data ", slog.String("file", el), slog.Duration("time", time.Since(t)))
+		log.Info("saved en data ", slog.String("file", el), slog.Duration("time", time.Since(t)))
 	}
 
 	return nil

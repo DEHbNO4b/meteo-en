@@ -5,17 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"meteo-lightning/internal/config"
-	"meteo-lightning/internal/domain/models"
 	"meteo-lightning/internal/filesource/meteofile"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/services/meteoservice"
 	"meteo-lightning/internal/storage/postgres"
 	"time"
 )
-
-type MeteoStore interface {
-	SaveMeteoData(ctx context.Context, data []models.MeteoData) error
-}
 
 func main() {
 
