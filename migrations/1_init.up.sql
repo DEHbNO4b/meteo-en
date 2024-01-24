@@ -18,3 +18,4 @@ CREATE TABLE IF NOT EXISTS meteodata (
     rain_rate numeric(6,2)
 
 );
+

@@ -11,3 +11,6 @@ build_migrate:
 read_meteo:
 	go build ./cmd/meteo
 	./meteo
+read_en:
+	go build ./cmd/en
+	./en

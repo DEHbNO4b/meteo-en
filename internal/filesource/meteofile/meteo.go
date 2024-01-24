@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/domain/models"
-	source "meteo-lightning/internal/filesource"
+	"meteo-lightning/internal/filesource"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +21,7 @@ type MeteoSource struct {
 func NewMeteo(p, t string) (MeteoSource, error) {
 
 	if p == "" || t == "" {
-		return MeteoSource{}, source.ErrEmptyDataSource
+		return MeteoSource{}, filesource.ErrEmptyDataSource
 	}
 
 	return MeteoSource{path: filepath.FromSlash(p), template: filepath.FromSlash(t)}, nil
