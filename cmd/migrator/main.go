@@ -27,17 +27,15 @@ func main() {
 
 	m, err := migrate.New(
 		"file://"+migrationsPath,
-		// "postgres://practicum:practicum@localhost:5432/practicum?sslmode=disable",
-		cfg.DBconfig.ToString(),
+		"postgres://"+cfg.DBconfig.User+":"+cfg.DBconfig.Password+"@"+cfg.DBconfig.Host+":"+cfg.DBconfig.Port+"/"+cfg.DBconfig.Database+"?sslmode=disable",
 	)
 	if err != nil {
 		panic(err)
-		// fmt.Println("err", err)
 	}
 
-	if err := m.Down(); err != nil {
-		panic(err)
-	}
+	// if err := m.Down(); err != nil {
+	// 	panic(err)
+	// }
 	if err := m.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
 			fmt.Println("no migration change")

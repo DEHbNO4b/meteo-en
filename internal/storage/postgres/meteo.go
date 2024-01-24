@@ -35,9 +35,26 @@ func NewMeteoDB(log *slog.Logger, dsn string) (*MeteoDB, error) {
 }
 
 func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) error {
-	tx, err := mdb.db.BeginTx(ctx, nil)
+
+	fmt.Println("len data in storage:", len(data))
+	tx, err := mdb.db.Begin()
+	if err != nil {
+		return err
+	}
+
 	for _, el := range data {
 		_, err := tx.ExecContext(ctx,
-			"INSERT INTO ")
+			`INSERT INTO meteodata (station, time, temp_out, wind_speed, wind_dir, wind_run, wind_chill, bar, rain,rain_rate)
+				 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+			el.Station, el.Time, el.TempOut, el.WindSpeed, el.WindDir, el.WindRun, el.WindChill, el.Bar, el.Rain, el.RainRate,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
+
+	tx.Commit()
+
+	return nil
 }

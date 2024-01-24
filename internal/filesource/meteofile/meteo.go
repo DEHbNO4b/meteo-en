@@ -1,7 +1,7 @@
 package meteofile
 
 import (
-	"bufio"
+	"encoding/csv"
 	"fmt"
 	"io/fs"
 	"meteo-lightning/internal/config"
@@ -55,46 +55,49 @@ func (m *MeteoSource) Search() ([]string, error) {
 
 func Data(path string) ([]models.MeteoData, error) {
 
-	data := make([]models.MeteoData, 100)
+	data := make([]models.MeteoData, 0, 10000)
+
 	file, err := os.Open(path)
 	if err != nil {
 		return data, err
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-
-	scanner.Scan() // пропускаем две строки с названием столбцов
-	scanner.Scan()
-
 	fileName := filepath.Base(path)
+	names := strings.Split(fileName, ".")
+	name := names[0]
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		meteoLine, err := parseLine(line)
-		if err != nil {
-			fmt.Println(line)
-			fmt.Println("\t", err)
+	r := csv.NewReader(file)
+	r.Comma = '\t'
+
+	strings, err := r.ReadAll()
+	if err != nil {
+		fmt.Println("\t somthing went wrong", err)
+	}
+	if len(strings) <= 2 {
+		fmt.Println("empty data on path: ", path)
+		return data, ErrEmtyData
+	}
+	for _, el := range strings[2:] {
+		if len(el) != 30 {
+			fmt.Println("wrong string data: ", el)
 			continue
 		}
-		// fmt.Printf("%v\n", meteoLine)
-		dmd, err := meteoToDomain(meteoLine)
+		d := makeData(el)
+		dmd, err := meteoToDomain(d)
 		if err != nil {
 			fmt.Printf("unable to convert meteo data to domain: %v\n", err)
+			continue
 		}
-		dmd.Station = fileName
 
+		dmd.Station = name
 		data = append(data, dmd)
 	}
+
 	return data, nil
 }
 
-func parseLine(l string) (meteoData, error) {
-
-	rec := strings.Split(l, "\t")
-	if len(rec) != 30 {
-		return meteoData{}, source.ErrInvalidDataString
-	}
+func makeData(rec []string) meteoData {
 
 	md := meteoData{}
 
@@ -105,15 +108,16 @@ func parseLine(l string) (meteoData, error) {
 	md.WindDir = rec[8]
 	md.WindRun = rec[9]
 	md.WindChill = rec[12]
-	md.Bar = rec[16]
+	md.Bar = rec[15]
 	md.Rain = rec[16]
 	md.RainRate = rec[17]
 
-	return md, nil
+	return md
 
 }
 
 func Files() ([]string, error) {
+
 	//load config
 	cfg := config.MustLoadCfg()
 

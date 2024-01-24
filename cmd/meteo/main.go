@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/domain/models"
 	"meteo-lightning/internal/filesource/meteofile"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/services/meteoservice"
 	"meteo-lightning/internal/storage/postgres"
+	"time"
 )
 
 type MeteoStore interface {
@@ -37,7 +39,7 @@ func run() error {
 		return err
 	}
 
-	mserv := meteoservice.NewService(meteoDB) // MeteoService
+	meteoSrv := meteoservice.NewService(meteoDB) // MeteoService
 
 	files, err := meteofile.Files() // search files with meteo data
 	if err != nil {
@@ -48,12 +50,18 @@ func run() error {
 		data, err := meteofile.Data(el)
 		if err != nil {
 			fmt.Printf("unable to read meteodata %v\n", err)
+			continue
 		}
 
-		err = mserv.SaveMeteoData(ctx, data)
+		log.Info("readed data ", slog.String("from file", el))
+
+		t := time.Now()
+		err = meteoSrv.SaveMeteoData(ctx, data)
 		if err != nil {
 			log.Error("unable to save data", err)
+			continue
 		}
+		log.Info("saved data ", slog.String("file", el), slog.Duration("time", time.Since(t)))
 	}
 
 	return nil
