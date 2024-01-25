@@ -3,7 +3,11 @@ package models
 import "time"
 
 type MeteoData struct {
-	Station      string
+
+	//
+	Station Station
+
+	StName       string
 	Time         time.Time
 	TempOut      float64
 	HiTemp       float64

@@ -90,7 +90,7 @@ func Data(path string) ([]models.MeteoData, error) {
 			continue
 		}
 
-		dmd.Station = name
+		dmd.StName = name
 		data = append(data, dmd)
 	}
 

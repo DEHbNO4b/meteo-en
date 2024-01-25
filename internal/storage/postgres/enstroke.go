@@ -29,6 +29,12 @@ func NewEnDB(log *slog.Logger, dsn string) (*EnDB, error) {
 
 }
 
+func (edb *EnDB) Close() {
+	if edb.db != nil {
+		edb.db.Close()
+	}
+}
+
 func (edb *EnDB) SaveEnData(ctx context.Context, data []models.StrokeEN) error {
 
 	fmt.Println("len data in storage:", len(data))
@@ -52,4 +58,9 @@ func (edb *EnDB) SaveEnData(ctx context.Context, data []models.StrokeEN) error {
 	tx.Commit()
 
 	return nil
+}
+func (edb *EnDB) LightningData(ctx context.Context) ([]models.StrokeEN, error) {
+	strokes := make([]models.StrokeEN, 0, 10000)
+
+	return strokes, nil
 }
