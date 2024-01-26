@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"meteo-lightning/internal/domain/models"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -59,8 +60,10 @@ func (edb *EnDB) SaveEnData(ctx context.Context, data []models.StrokeEN) error {
 
 	return nil
 }
-func (edb *EnDB) LightningDataByTimeAndPos(ctx context.Context) ([]models.StrokeEN, error) {
-	strokes := make([]models.StrokeEN, 0, 10000)
+func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (models.LightningActivity, error) {
 
-	return strokes, nil
+	la := models.LightningActivity{}
+
+	return la, nil
+
 }

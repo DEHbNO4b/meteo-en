@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -19,6 +20,7 @@ type Config struct {
 	Env      string   `yaml:"env" env-default:"local"`
 	DBconfig DBconfig `yaml:"dbconfig" env-required:"true"`
 	Fcfg     FilesConfig
+	ResCfg   ResearchConfig
 }
 
 type DBconfig struct {
@@ -35,6 +37,11 @@ type FilesConfig struct {
 	EnPath        string `yaml:"en_path" env-default:"./public/en"`
 	EnTemplate    string `yaml:"en_template" env-default:"public/en/*.csv"`
 }
+type ResearchConfig struct {
+	Dur   time.Duration
+	Begin time.Time
+	End   time.Time
+}
 
 func (db DBconfig) ToString() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.Database)
@@ -46,6 +53,7 @@ func MustLoadCfg() Config {
 		path := filepath.FromSlash(fetchConfigPath())
 
 		MustLoadByPath(path)
+		Cfg.ResCfg = parse()
 	})
 
 	return Cfg
@@ -71,4 +79,31 @@ func MustLoadByPath(path string) Config {
 	}
 
 	return Cfg
+}
+
+func parse() ResearchConfig {
+
+	rc := ResearchConfig{}
+
+	var begin, end string
+
+	flag.DurationVar(&rc.Dur, "dur", 30*time.Minute, "research duration")
+	flag.StringVar(&begin, "begin", "2022-01-01", "research begin time")
+	flag.StringVar(&end, "end", "2022-12-31", "research end time")
+
+	flag.Parse()
+
+	t, err := time.Parse("2006-01-02", begin)
+	if err != nil {
+		fmt.Println("unable to parse begin time: ", err)
+	}
+	rc.Begin = t
+
+	t, err = time.Parse("2006-01-02", end)
+	if err != nil {
+		fmt.Println("unable to parse end time: ", err)
+	}
+	rc.End = t
+
+	return rc
 }

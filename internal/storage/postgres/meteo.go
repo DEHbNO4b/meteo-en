@@ -63,6 +63,43 @@ func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) 
 	return nil
 }
 
+func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (models.MeteoParams, error) {
+
+	op := "storage/postgres/MeteoData"
+
+	mp := models.MeteoParams{}
+
+	rows, err := mdb.db.QueryContext(ctx, `SELECT wind_speed,rain,rain_rate FROM meteodata 
+									WHERE $1 LIKE '%'||station||'%'  AND time BETWEEN $2 AND $3`,
+		st.Name(), t, t.Add(dur))
+	if err != nil {
+
+		if errors.Is(sql.ErrNoRows, err) {
+			return mp, storage.ErrNoDataFound
+		}
+
+		return mp, fmt.Errorf("%s %w", op, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			windSpeed, rain, rainRate float64
+		)
+		if err := rows.Scan(&windSpeed, &rain, &rainRate); err != nil {
+			return mp, fmt.Errorf("%s %w", op, err)
+		}
+
+		mp.WindSpeed = windSpeed
+		mp.Rain = rain
+		mp.RainRate = rainRate
+
+		fmt.Printf("%#v\n", mp)
+	}
+
+	return mp, nil
+}
+
 func (mdb *MeteoDB) MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.Time, s models.Station) ([]models.MeteoData, error) {
 
 	op := "storage/postgres/MeteoData"
@@ -130,3 +167,5 @@ func (mdb *MeteoDB) MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.T
 
 	return nil, nil
 }
+
+// SELECT wind_speed,rain,rain_rate FROM meteodata WHERE 'VGI' LIKE '%'||station||'%' AND time BETWEEN '2022-06-01' AND '2022-06-05' ;

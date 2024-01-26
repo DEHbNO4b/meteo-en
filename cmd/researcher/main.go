@@ -25,36 +25,34 @@ func main() {
 
 func run() error {
 
-	op := "researcher.main.run"
-
 	ctx := context.Background()
 
 	cfg := config.MustLoadCfg() //load config
 
 	log := sl.SetupLogger(cfg.Env) //log
 
-	mdb, err := postgres.NewMeteoDB(log, cfg.DBconfig.ToString()) // TODO: open meteo db
+	mdb, err := postgres.NewMeteoDB(log, cfg.DBconfig.ToString()) // open meteo db
 	if err != nil {
 		return err
 	}
 
-	endb, err := postgres.NewEnDB(log, cfg.DBconfig.ToString()) // TODO: open en db
+	endb, err := postgres.NewEnDB(log, cfg.DBconfig.ToString()) // open en db
 	if err != nil {
 		return err
 	}
 
-	sdb, err := postgres.NewStationsDB(log, cfg.DBconfig.ToString()) // TODO: open stations db
+	sdb, err := postgres.NewStationsDB(log, cfg.DBconfig.ToString()) // open stations db
 	if err != nil {
 		return err
 	}
 
-	srv, err := science.New(mdb, endb, sdb, science.WithLogger(log)) // TODO: create science service
+	srv, err := science.New(mdb, endb, sdb, science.WithLogger(log)) // create science service
 	if err != nil {
-		log.Error(op, err)
+		return err
 	}
 	defer srv.Close()
 
-	srv.MakeResearch(ctx) // TODO: make research
+	srv.MakeResearch(ctx) // make research
 
 	// TODO: save results
 
