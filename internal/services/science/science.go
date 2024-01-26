@@ -2,28 +2,34 @@ package science
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"meteo-lightning/internal/domain/models"
+	"meteo-lightning/internal/lib/logger/sl"
 	"time"
 )
 
 type MeteoSource interface {
-	MeteoData(ctx context.Context) ([]models.MeteoData, error)
-	// Stations(ctx context.Context) ([]models.Station, error)
+	MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.Time, s models.Station) ([]models.MeteoData, error)
+	Close()
+}
+type StationsProvider interface {
+	Stations(ctx context.Context) ([]models.Station, error)
 	Close()
 }
 
 type LightningSource interface {
-	LightningData(ctx context.Context) ([]models.StrokeEN, error)
+	LightningDataByTimeAndPos(ctx context.Context) ([]models.StrokeEN, error)
 	Close()
 }
 
 type ScienceConfiguration func(os *ScienceService) error
 
 type ScienceService struct {
-	log    *slog.Logger
-	meteo  MeteoSource
-	stroke LightningSource
+	log        *slog.Logger
+	meteoProv  MeteoSource
+	strokeProv LightningSource
+	stProv     StationsProvider
 }
 
 func WithLogger(log *slog.Logger) ScienceConfiguration {
@@ -33,11 +39,13 @@ func WithLogger(log *slog.Logger) ScienceConfiguration {
 	}
 }
 
-func New(ms MeteoSource, ls LightningSource, cfgs ...ScienceConfiguration) (*ScienceService, error) {
+func New(ms MeteoSource, ls LightningSource, sp StationsProvider, cfgs ...ScienceConfiguration) (*ScienceService, error) {
 
 	s := &ScienceService{}
-	s.meteo = ms
-	s.stroke = ls
+
+	s.meteoProv = ms
+	s.strokeProv = ls
+	s.stProv = sp
 
 	for _, cfg := range cfgs {
 		err := cfg(s)
@@ -50,18 +58,27 @@ func New(ms MeteoSource, ls LightningSource, cfgs ...ScienceConfiguration) (*Sci
 }
 
 func (s *ScienceService) Close() {
-	s.meteo.Close()
-	s.stroke.Close()
+	s.meteoProv.Close()
+	s.strokeProv.Close()
+	s.stProv.Close()
 }
 
 func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	op := "science.MakeResearch"
 
-	md, err := s.meteo.MeteoData(ctx)
+	// md, err := s.meteoProv.MeteoData(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
-		return err
+		s.log.Error("err", sl.Err(err))
+		return fmt.Errorf("%s %w", op, err)
 	}
+	s.log.Info(op, slog.Any("stations", stations))
+
 	// s.log.Info(op, slog.String("research", "success"))
 	// l := len(md)
 	// s.log.Info(op, slog.Int("data len", l))
@@ -72,17 +89,18 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 func (s *ScienceService) durationGen(ctx context.Context, dur time.Duration, data []models.MeteoData) <-chan models.MeteoData {
 
 	out := make(chan models.MeteoData)
-	defer close(out)
+	// defer close(out)
 
-	md := models.MeteoData{}
-	var t time.Time
+	// mdata := models.MeteoData{}
 
-	for _, el := range data {
-		if t.IsZero() {
-			t = el.Time.Add(dur)
-		}
+	// var t time.Time
 
-	}
+	// for _, el := range data {
+	// 	if t.IsZero() {
+	// 		t = el.Time.Add(dur)
+	// 	}
+
+	// }
 
 	return out
 }

@@ -59,7 +59,7 @@ func (edb *EnDB) SaveEnData(ctx context.Context, data []models.StrokeEN) error {
 
 	return nil
 }
-func (edb *EnDB) LightningData(ctx context.Context) ([]models.StrokeEN, error) {
+func (edb *EnDB) LightningDataByTimeAndPos(ctx context.Context) ([]models.StrokeEN, error) {
 	strokes := make([]models.StrokeEN, 0, 10000)
 
 	return strokes, nil

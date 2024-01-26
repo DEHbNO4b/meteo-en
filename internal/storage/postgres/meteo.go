@@ -9,12 +9,9 @@ import (
 	"meteo-lightning/internal/domain/models"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/storage"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-)
-
-var (
-	ErrInvalidDB = errors.New("invalid db ")
 )
 
 type MeteoDB struct {
@@ -66,11 +63,13 @@ func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) 
 	return nil
 }
 
-func (mdb *MeteoDB) MeteoData(ctx context.Context) ([]models.MeteoData, error) {
+func (mdb *MeteoDB) MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.Time, s models.Station) ([]models.MeteoData, error) {
 
 	op := "storage/postgres/MeteoData"
 
-	data := make([]models.MeteoData, 0, 1000)
+	ans := make(map[string][]models.MeteoData)
+
+	var data []models.MeteoData
 
 	rows, err := mdb.db.Query(`SELECT m.station, m.time, m.temp_out, m.wind_speed, m.wind_dir, 
 								m.wind_run, m.wind_chill, m.bar, m.rain, m.rain_rate,
@@ -80,9 +79,9 @@ func (mdb *MeteoDB) MeteoData(ctx context.Context) ([]models.MeteoData, error) {
 								ORDER BY s.name,m.time`)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return data, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
+			return nil, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
 		}
-		return data, fmt.Errorf("%s %w", op, err)
+		return nil, fmt.Errorf("%s %w", op, err)
 	}
 
 	defer rows.Close()
@@ -112,13 +111,22 @@ func (mdb *MeteoDB) MeteoData(ctx context.Context) ([]models.MeteoData, error) {
 
 		md.Station = station
 
+		d, ok := ans[md.Station.Name()]
+		if !ok {
+			data = make([]models.MeteoData, 0, 5000)
+		} else {
+			data = d
+		}
+
 		data = append(data, md)
+		ans[md.Station.Name()] = data
+
 	}
 
 	err = rows.Err()
 	if err != nil {
-		return data, err
+		return nil, err
 	}
 
-	return data, nil
+	return nil, nil
 }

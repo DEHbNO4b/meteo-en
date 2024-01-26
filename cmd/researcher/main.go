@@ -1,5 +1,13 @@
 package main
 
+import (
+	"context"
+	"meteo-lightning/internal/config"
+	"meteo-lightning/internal/lib/logger/sl"
+	"meteo-lightning/internal/services/science"
+	"meteo-lightning/internal/storage/postgres"
+)
+
 type MeteoProvider interface {
 }
 
@@ -17,13 +25,36 @@ func main() {
 
 func run() error {
 
-	// cfg := config.MustLoadCfg() // load config
+	op := "researcher.main.run"
 
-	// TODO: open DB
+	ctx := context.Background()
 
-	// TODO: create science service
+	cfg := config.MustLoadCfg() //load config
 
-	// TODO: make research
+	log := sl.SetupLogger(cfg.Env) //log
+
+	mdb, err := postgres.NewMeteoDB(log, cfg.DBconfig.ToString()) // TODO: open meteo db
+	if err != nil {
+		return err
+	}
+
+	endb, err := postgres.NewEnDB(log, cfg.DBconfig.ToString()) // TODO: open en db
+	if err != nil {
+		return err
+	}
+
+	sdb, err := postgres.NewStationsDB(log, cfg.DBconfig.ToString()) // TODO: open stations db
+	if err != nil {
+		return err
+	}
+
+	srv, err := science.New(mdb, endb, sdb, science.WithLogger(log)) // TODO: create science service
+	if err != nil {
+		log.Error(op, err)
+	}
+	defer srv.Close()
+
+	srv.MakeResearch(ctx) // TODO: make research
 
 	// TODO: save results
 
