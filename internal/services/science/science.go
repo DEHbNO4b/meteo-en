@@ -69,6 +69,20 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 	return nil
 }
 
-func (s *ScienceService) dataDurations(ctx context.Context, dur time.Duration, data []models.MeteoData, out chan<- models.MeteoData) error {
+func (s *ScienceService) durationGen(ctx context.Context, dur time.Duration, data []models.MeteoData) <-chan models.MeteoData {
 
+	out := make(chan models.MeteoData)
+	defer close(out)
+
+	md := models.MeteoData{}
+	var t time.Time
+
+	for _, el := range data {
+		if t.IsZero() {
+			t = el.Time.Add(dur)
+		}
+
+	}
+
+	return out
 }
