@@ -1,6 +1,6 @@
 run:
 	go build ./cmd/researcher
-	./researcher
+	./researcher -begin 2022-08-15 -radius 1000
 
 migrate: build_migrate
 	./migrator  --migrations-path=./migrations

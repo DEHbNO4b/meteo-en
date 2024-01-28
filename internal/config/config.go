@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -20,7 +19,7 @@ type Config struct {
 	Env      string   `yaml:"env" env-default:"local"`
 	DBconfig DBconfig `yaml:"dbconfig" env-required:"true"`
 	Fcfg     FilesConfig
-	ResCfg   ResearchConfig
+	Flags    FlagConfig
 }
 
 type DBconfig struct {
@@ -37,10 +36,12 @@ type FilesConfig struct {
 	EnPath        string `yaml:"en_path" env-default:"./public/en"`
 	EnTemplate    string `yaml:"en_template" env-default:"public/en/*.csv"`
 }
-type ResearchConfig struct {
-	Dur   time.Duration
-	Begin time.Time
-	End   time.Time
+type FlagConfig struct {
+	Path   string
+	Dur    time.Duration
+	Begin  time.Time
+	End    time.Time
+	Radius float64
 }
 
 func (db DBconfig) ToString() string {
@@ -50,24 +51,27 @@ func (db DBconfig) ToString() string {
 func MustLoadCfg() Config {
 
 	once.Do(func() {
-		path := filepath.FromSlash(fetchConfigPath())
 
-		MustLoadByPath(path)
-		Cfg.ResCfg = parse()
+		// parse()
+		// path := filepath.FromSlash(fetchConfigPath())
+		Cfg.Flags = parse()
+		MustLoadByPath(Cfg.Flags.Path)
+		// Cfg.ResCfg = parse()
 	})
 
 	return Cfg
 
 }
-func fetchConfigPath() string {
 
-	var res string
+// func fetchConfigPath() string {
 
-	flag.StringVar(&res, "cfg", "./config/config.yaml", "path to config yaml file")
-	flag.Parse()
+// 	var res string
 
-	return res
-}
+// 	flag.StringVar(&res, "cfg", "./config/config.yaml", "path to config yaml file")
+// 	flag.Parse()
+
+//		return res
+//	}
 func MustLoadByPath(path string) Config {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -81,19 +85,21 @@ func MustLoadByPath(path string) Config {
 	return Cfg
 }
 
-func parse() ResearchConfig {
+func parse() FlagConfig {
 
-	rc := ResearchConfig{}
+	rc := FlagConfig{}
 
 	var begin, end string
 
-	flag.DurationVar(&rc.Dur, "dur", 30*time.Minute, "research duration")
+	flag.StringVar(&rc.Path, "cfg", "./config/config.yaml", "path to config yaml file")
+	flag.DurationVar(&rc.Dur, "dur", 60*time.Minute, "research duration")
 	flag.StringVar(&begin, "begin", "2022-01-01", "research begin time")
 	flag.StringVar(&end, "end", "2022-12-31", "research end time")
+	flag.Float64Var(&rc.Radius, "radius", 10.5, "research radius")
 
 	flag.Parse()
 
-	t, err := time.Parse("2006-01-02", begin)
+	t, err := time.Parse("2006-01-02 15:04", begin)
 	if err != nil {
 		fmt.Println("unable to parse begin time: ", err)
 	}

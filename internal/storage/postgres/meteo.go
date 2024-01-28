@@ -67,6 +67,8 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 
 	op := "storage/postgres/MeteoData"
 
+	mdb.log.Info(op)
+
 	mp := models.MeteoParams{}
 
 	rows, err := mdb.db.QueryContext(ctx, `SELECT wind_speed,rain,rain_rate FROM meteodata 

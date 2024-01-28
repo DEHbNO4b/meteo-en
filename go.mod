@@ -6,6 +6,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.5.2
+	github.com/umahmood/haversine v0.0.0-20151105152445-808ab04add26
 )
 
 require (

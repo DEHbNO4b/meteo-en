@@ -15,6 +15,7 @@ func enToDomain(s stroke) models.StrokeEN {
 	stroke.SetTime(s.Time)
 	stroke.SetNano(s.Nano)
 	stroke.SetLat(s.Lat)
+	stroke.SetLong(s.Long)
 	stroke.SetSignal(s.Signal)
 	stroke.SetHeight(s.Height)
 	stroke.SetSensors(s.Sensors)
@@ -65,10 +66,9 @@ func makeStroke(rec []string) (stroke, error) {
 	s.Nano = int64(nano)
 	s.Lat = lat
 	s.Long = long
-	s.Signal = int16(signal)
-	s.Height = int16(height)
+	s.Signal = signal
+	s.Height = height
 	s.Sensors = int16(sensors)
 
 	return s, nil
-
 }

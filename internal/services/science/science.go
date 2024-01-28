@@ -21,7 +21,7 @@ type StationsProvider interface {
 }
 
 type LightningSource interface {
-	StationLightningActivityByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (models.LightningActivity, error)
+	StationLightningActivityByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) ([]*models.StrokeEN, error)
 	Close()
 }
 
@@ -69,69 +69,62 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 
 	op := "science.MakeResearch"
 
+	s.log.Info(op)
+
 	cfg := config.MustLoadCfg()
-	resCfg := cfg.ResCfg
+
+	resCfg := cfg.Flags
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
-		s.log.Error("err", sl.Err(err))
-		return nil, fmt.Errorf("%s %w", op, err)
+		return nil, err
 	}
+
+	// s.log.Info("st", slog.Any("stations", stations))
 
 	points := make([]*models.CorrPoint, 0, 1000)
 
 	for _, el := range stations {
 
+		station := el
+
 		begin := resCfg.Begin
 
 		for begin.Before(resCfg.End) {
-			point, err := models.NewCorrPoint(&el, resCfg.Dur)
+			point, err := models.NewCorrPoint(&station, resCfg.Dur)
 			if err != nil {
 				s.log.Error(op, sl.Err(err))
 				continue
 			}
 
-			mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, el, begin, resCfg.Dur)
+			mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, begin, resCfg.Dur)
 			if err != nil {
 				s.log.Error(op, sl.Err(err))
 				continue
 			}
 
-			lActivity, err := s.strokeProv.StationLightningActivityByTime(ctx, el, begin, resCfg.Dur)
+			strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, begin, resCfg.Dur)
 			if err != nil {
 				s.log.Error(op, sl.Err(err))
 				continue
 			}
 
 			point.SetMParams(&mParam)
-			point.SetlActivity(&lActivity)
+
+			la := models.NewLActivity(strokes)
+
+			point.SetlActivity(&la)
+
+			points = append(points, point)
 
 			begin = begin.Add(resCfg.Dur)
-			// begin = newTime
-			points = append(points, point)
+
 			break
 		}
 		break
 	}
 
+	fmt.Printf("%+v\n", points)
+
 	return points, nil
 }
-
-// func (s *ScienceService) durationGen(ctx context.Context, dur time.Duration, data []models.MeteoData) <-chan models.MeteoData {
-
-// 	out := make(chan models.MeteoData)
-// 	// defer close(out)
-
-// 	// mdata := models.MeteoData{}
-
-// 	// var t time.Time
-
-// 	// for _, el := range data {
-// 	// 	if t.IsZero() {
-// 	// 		t = el.Time.Add(dur)
-// 	// 	}
-
-// 	// }
-
-// 	return out
-// }

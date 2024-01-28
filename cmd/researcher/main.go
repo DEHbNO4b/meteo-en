@@ -52,7 +52,10 @@ func run() error {
 	}
 	defer srv.Close()
 
-	srv.MakeResearch(ctx) // make research
+	_, err = srv.MakeResearch(ctx) // make research
+	if err != nil {
+		return err
+	}
 
 	// TODO: save results
 

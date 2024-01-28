@@ -43,7 +43,7 @@ func run() error {
 
 	for _, el := range files {
 
-		data, err := enfile.Data(el)
+		strokes, err := enfile.Data(el)
 
 		if err != nil {
 			fmt.Printf("unable to read en data %v\n", err)
@@ -53,12 +53,14 @@ func run() error {
 		log.Info("readed data ", slog.String("from file", el))
 
 		t := time.Now()
-		err = enSrv.SaveEnData(ctx, data)
+
+		err = enSrv.SaveEnData(ctx, strokes)
 		if err != nil {
 			log.Error("unable to save en data", err)
 			continue
 		}
 		log.Info("saved en data ", slog.String("file", el), slog.Duration("time", time.Since(t)))
+
 	}
 
 	return nil
