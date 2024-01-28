@@ -40,10 +40,12 @@ func (mdb *MeteoDB) Close() {
 
 func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) error {
 
+	op := "storage/postgres/MeteoData.SaveMeteoData"
+
 	fmt.Println("len data in storage:", len(data))
 	tx, err := mdb.db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("%s %w", op, err)
 	}
 
 	for _, el := range data {
@@ -54,7 +56,7 @@ func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) 
 		)
 		if err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("%s %w", op, err)
 		}
 	}
 
@@ -65,14 +67,14 @@ func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) 
 
 func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (models.MeteoParams, error) {
 
-	op := "storage/postgres/MeteoData"
+	op := "storage/postgres/MeteoData.StationMeteoParamsByTime"
 
-	mdb.log.Info(op)
+	// mdb.log.Info(op)
 
 	mp := models.MeteoParams{}
 
-	rows, err := mdb.db.QueryContext(ctx, `SELECT wind_speed,rain,rain_rate FROM meteodata 
-									WHERE $1 LIKE '%'||station||'%'  AND time BETWEEN $2 AND $3`,
+	rows, err := mdb.db.QueryContext(ctx, `SELECT AVG(wind_speed),AVG(rain),AVG(rain_rate),MAX(wind_speed),MAX(rain),MAX(rain_rate)
+	 								FROM meteodata WHERE $1 LIKE '%'||station||'%'  AND time BETWEEN $2 AND $3`,
 		st.Name(), t, t.Add(dur))
 	if err != nil {
 
@@ -86,17 +88,32 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 
 	for rows.Next() {
 		var (
-			windSpeed, rain, rainRate float64
+			windSpeed, rain, rainRate          sql.NullFloat64
+			maxWindSpeed, maxRain, maxRainRate sql.NullFloat64
 		)
-		if err := rows.Scan(&windSpeed, &rain, &rainRate); err != nil {
+		if err := rows.Scan(&windSpeed, &rain, &rainRate, &maxWindSpeed, &maxRain, &maxRainRate); err != nil {
 			return mp, fmt.Errorf("%s %w", op, err)
 		}
 
-		mp.WindSpeed = windSpeed
-		mp.Rain = rain
-		mp.RainRate = rainRate
+		if windSpeed.Valid {
+			mp.WindSpeed = windSpeed.Float64
+		}
+		if rain.Valid {
+			mp.Rain = rain.Float64
+		}
+		if rainRate.Valid {
+			mp.RainRate = rainRate.Float64
+		}
+		if maxWindSpeed.Valid {
+			mp.MaxWindSpeed = maxWindSpeed.Float64
+		}
+		if maxRain.Valid {
+			mp.MaxRain = maxRain.Float64
+		}
+		if maxRainRate.Valid {
+			mp.MaxRainRate = maxRainRate.Float64
+		}
 
-		fmt.Printf("%#v\n", mp)
 	}
 
 	return mp, nil
@@ -170,4 +187,4 @@ func (mdb *MeteoDB) MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.T
 	return nil, nil
 }
 
-// SELECT wind_speed,rain,rain_rate FROM meteodata WHERE 'VGI' LIKE '%'||station||'%' AND time BETWEEN '2022-06-01' AND '2022-06-05' ;
+// SELECT AVG(wind_speed) ,AVG(rain) r ,AVG(rain_rate)rr FROM meteodata WHERE 'VGI' LIKE '%'||station||'%' AND time BETWEEN '2022-06-01' AND '2022-06-05' ;

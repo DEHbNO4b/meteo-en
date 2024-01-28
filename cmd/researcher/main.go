@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/services/science"
@@ -52,12 +53,14 @@ func run() error {
 	}
 	defer srv.Close()
 
-	_, err = srv.MakeResearch(ctx) // make research
+	points, err := srv.MakeResearch(ctx) // make research
 	if err != nil {
 		return err
 	}
 
 	// TODO: save results
+	fmt.Println("len points: ", len(points))
+	fmt.Println(points[0])
 
 	return nil
 }

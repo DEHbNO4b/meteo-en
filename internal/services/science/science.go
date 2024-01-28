@@ -7,6 +7,7 @@ import (
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/domain/models"
 	"meteo-lightning/internal/lib/logger/sl"
+	"sync"
 	"time"
 )
 
@@ -80,51 +81,66 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 		return nil, err
 	}
 
-	// s.log.Info("st", slog.Any("stations", stations))
-
 	points := make([]*models.CorrPoint, 0, 1000)
+	t := time.Now()
 
 	for _, el := range stations {
 
 		station := el
+		// _ = el
 
 		begin := resCfg.Begin
 
-		for begin.Before(resCfg.End) {
-			point, err := models.NewCorrPoint(&station, resCfg.Dur)
-			if err != nil {
-				s.log.Error(op, sl.Err(err))
-				continue
-			}
+		wg := sync.WaitGroup{}
 
-			mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, begin, resCfg.Dur)
-			if err != nil {
-				s.log.Error(op, sl.Err(err))
-				continue
-			}
+		for i := 0; begin.Add(time.Duration(resCfg.Dur.Nanoseconds() * int64(i))).Before(resCfg.End); i++ {
 
-			strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, begin, resCfg.Dur)
-			if err != nil {
-				s.log.Error(op, sl.Err(err))
-				continue
-			}
+			locI := i
+			wg.Add(1)
+			fmt.Println("iteration:", locI)
+			fmt.Println(begin.Add(time.Duration(resCfg.Dur.Nanoseconds() * int64(locI))))
 
-			point.SetMParams(&mParam)
+			go func() {
 
-			la := models.NewLActivity(strokes)
+				point, err := models.NewCorrPoint(&station, resCfg.Dur)
+				if err != nil {
+					s.log.Error(op, sl.Err(err))
+					// continue
+					return
+				}
+				ldur := resCfg.Dur.Nanoseconds() * int64(locI)
 
-			point.SetlActivity(&la)
+				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, begin.Add(time.Duration(ldur)), resCfg.Dur)
+				if err != nil {
+					s.log.Error(op, sl.Err(err))
+					// continue
+					return
+				}
 
-			points = append(points, point)
+				strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, begin, resCfg.Dur)
+				if err != nil {
+					s.log.Error(op, sl.Err(err))
+					// continue
+					return
+				}
 
-			begin = begin.Add(resCfg.Dur)
+				point.SetMParams(&mParam)
 
-			break
+				la := models.NewLActivity(strokes)
+
+				point.SetlActivity(&la)
+
+				points = append(points, point)
+
+				begin = begin.Add(resCfg.Dur)
+				wg.Done()
+			}()
+
 		}
-		break
-	}
+		wg.Wait()
 
-	fmt.Printf("%+v\n", points)
+	}
+	fmt.Printf("research took %v", time.Since(t))
 
 	return points, nil
 }

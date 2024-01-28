@@ -99,7 +99,7 @@ func parse() FlagConfig {
 
 	flag.Parse()
 
-	t, err := time.Parse("2006-01-02 15:04", begin)
+	t, err := time.Parse("2006-01-02", begin)
 	if err != nil {
 		fmt.Println("unable to parse begin time: ", err)
 	}
