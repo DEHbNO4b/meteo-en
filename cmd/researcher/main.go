@@ -60,7 +60,15 @@ func run() error {
 
 	// TODO: save results
 	fmt.Println("len points: ", len(points))
-	fmt.Println(points[0])
+
+	ws := make([]float64, 0, 10000)
+	mws := make([]float64, 0, 10000)
+	r := make([]float64, 0, 10000)
+	rr := make([]float64, 0, 10000)
+
+	for _, el := range points {
+
+	}
 
 	return nil
 }

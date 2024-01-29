@@ -1,0 +1,1 @@
+ALTER TABLE enstrikes ALTER COLUMN signal TYPE integer;

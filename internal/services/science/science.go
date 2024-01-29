@@ -7,6 +7,7 @@ import (
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/domain/models"
 	"meteo-lightning/internal/lib/logger/sl"
+	"meteo-lightning/internal/lib/semaphore"
 	"sync"
 	"time"
 )
@@ -70,11 +71,11 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 
 	op := "science.MakeResearch"
 
-	s.log.Info(op)
-
 	cfg := config.MustLoadCfg()
 
 	resCfg := cfg.Flags
+
+	semaphore := semaphore.NewSemaphore(15)
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
@@ -88,7 +89,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 
 		station := el
 		// _ = el
-
+		s.log.Info("", slog.Any("station", el))
 		begin := resCfg.Begin
 
 		wg := sync.WaitGroup{}
@@ -96,11 +97,17 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 		for i := 0; begin.Add(time.Duration(resCfg.Dur.Nanoseconds() * int64(i))).Before(resCfg.End); i++ {
 
 			locI := i
+
 			wg.Add(1)
-			fmt.Println("iteration:", locI)
-			fmt.Println(begin.Add(time.Duration(resCfg.Dur.Nanoseconds() * int64(locI))))
+			semaphore.Acquire()
+
+			// fmt.Println("iteration:", locI)
+			// fmt.Println(begin.Add(time.Duration(resCfg.Dur.Nanoseconds() * int64(locI))))
 
 			go func() {
+
+				defer wg.Done()
+				defer semaphore.Release()
 
 				point, err := models.NewCorrPoint(&station, resCfg.Dur)
 				if err != nil {
@@ -124,22 +131,26 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 					return
 				}
 
-				point.SetMParams(&mParam)
+				// point.SetMParams(&mParam)
+				point.MeteoParams = &mParam
 
 				la := models.NewLActivity(strokes)
 
-				point.SetlActivity(&la)
+				// point.SetlActivity(&la)
+				point.LightningActivity = &la
 
 				points = append(points, point)
 
 				begin = begin.Add(resCfg.Dur)
-				wg.Done()
+
 			}()
 
 		}
+
 		wg.Wait()
 
 	}
+
 	fmt.Printf("research took %v", time.Since(t))
 
 	return points, nil

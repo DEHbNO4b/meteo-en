@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/domain/models"
+	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/storage"
 	"time"
 
@@ -40,14 +41,17 @@ func (edb *EnDB) Close() {
 }
 
 func (edb *EnDB) SaveEnData(ctx context.Context, data []models.StrokeEN) error {
+	op := "storage/postgres/EnDB.SaveEnData"
 
-	fmt.Println("len data in storage:", len(data))
+	// fmt.Println("len data in storage:", len(data))
 	tx, err := edb.db.Begin()
 	if err != nil {
-		return err
+		edb.log.Error(op, sl.Err(err))
+		return fmt.Errorf("%s %w", op, err)
 	}
 
 	for _, el := range data {
+		// fmt.Println(el)
 		_, err := tx.ExecContext(ctx,
 			`INSERT INTO enstrikes (cloud, time, latitude, longitude, signal, height, sensors)
 				 VALUES($1,$2,$3,$4,$5,$6,$7)`,
@@ -55,7 +59,8 @@ func (edb *EnDB) SaveEnData(ctx context.Context, data []models.StrokeEN) error {
 		)
 		if err != nil {
 			tx.Rollback()
-			return err
+			edb.log.Error(op, sl.Err(err))
+			return fmt.Errorf("%s %w", op, err)
 		}
 	}
 
@@ -85,6 +90,7 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 			return nil, storage.ErrNoDataFound
 		}
 
+		edb.log.Error(op, sl.Err(err))
 		return nil, fmt.Errorf("%s %w", op, err)
 	}
 	defer rows.Close()

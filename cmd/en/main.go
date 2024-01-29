@@ -56,7 +56,7 @@ func run() error {
 
 		err = enSrv.SaveEnData(ctx, strokes)
 		if err != nil {
-			log.Error("unable to save en data", err)
+			//log.Error("unable to save en data", err)
 			continue
 		}
 		log.Info("saved en data ", slog.String("file", el), slog.Duration("time", time.Since(t)))

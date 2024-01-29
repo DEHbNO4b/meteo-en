@@ -6,5 +6,12 @@ CREATE TABLE IF NOT EXISTS enstrikes (
     longitude numeric(6,4),
     signal smallint,
     height smallint,
-    sensors smallint
+    sensors smallint,
+    	count              int,
+	maxPozitiveSignal  int,
+	maxNegativeSignal  int,
+	pozitiveSignal     int,
+	negativeSignal     int,
+	cloudTypeRelation   numeric(6,4),
+	groundTypeRelation numeric(6,4)
 );
