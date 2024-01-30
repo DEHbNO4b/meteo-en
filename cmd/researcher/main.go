@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/services/science"
@@ -47,28 +46,23 @@ func run() error {
 		return err
 	}
 
-	srv, err := science.New(mdb, endb, sdb, science.WithLogger(log)) // create science service
+	cpdb, err := postgres.NewCorrpointDB(log, cfg.DBconfig.ToString()) // open stations db
+	if err != nil {
+		return err
+	}
+
+	srv, err := science.New(mdb, endb, sdb, cpdb, science.WithLogger(log)) // create science service
 	if err != nil {
 		return err
 	}
 	defer srv.Close()
 
-	points, err := srv.MakeResearch(ctx) // make research
+	err = srv.MakeResearch(ctx) // make research
 	if err != nil {
 		return err
 	}
 
 	// TODO: save results
-	fmt.Println("len points: ", len(points))
-
-	ws := make([]float64, 0, 10000)
-	mws := make([]float64, 0, 10000)
-	r := make([]float64, 0, 10000)
-	rr := make([]float64, 0, 10000)
-
-	for _, el := range points {
-
-	}
 
 	return nil
 }

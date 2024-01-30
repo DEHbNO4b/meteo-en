@@ -4,12 +4,15 @@ CREATE TABLE IF NOT EXISTS corrpoints (
     duration interval,
     raduis numeric(6,2),
     wind_speed numeric(6,2),
+    maxwind_speed numeric(6,2),
     wind_dir varchar(5),
     wind_run numeric(6,2),
     wind_chill numeric(6,2),
     bar numeric(6,2),
     rain numeric(6,2),
+    max_rain numeric(6,2),
     rain_rate numeric(6,2),
+    maxrain_rate numeric(6,2),
     count              integer,
 	maxPozitiveSignal  integer,
 	maxNegativeSignal  integer,
@@ -17,5 +20,4 @@ CREATE TABLE IF NOT EXISTS corrpoints (
 	negativeSignal     integer,
 	cloudTypeRelation  numeric(6,4),
 	groundTypeRelation numeric(6,4)
-
 );

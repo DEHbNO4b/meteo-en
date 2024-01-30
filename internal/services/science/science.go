@@ -26,14 +26,18 @@ type LightningSource interface {
 	StationLightningActivityByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) ([]*models.StrokeEN, error)
 	Close()
 }
+type CorrPointProvider interface {
+	SaveCorrpoint(ctx context.Context, cp models.CorrPoint) error
+}
 
 type ScienceConfiguration func(os *ScienceService) error
 
 type ScienceService struct {
-	log        *slog.Logger
-	meteoProv  MeteoSource
-	strokeProv LightningSource
-	stProv     StationsProvider
+	log           *slog.Logger
+	meteoProv     MeteoSource
+	strokeProv    LightningSource
+	stProv        StationsProvider
+	corrPointProv CorrPointProvider
 }
 
 func WithLogger(log *slog.Logger) ScienceConfiguration {
@@ -43,13 +47,18 @@ func WithLogger(log *slog.Logger) ScienceConfiguration {
 	}
 }
 
-func New(ms MeteoSource, ls LightningSource, sp StationsProvider, cfgs ...ScienceConfiguration) (*ScienceService, error) {
+func New(ms MeteoSource,
+	ls LightningSource,
+	sp StationsProvider,
+	cpp CorrPointProvider,
+	cfgs ...ScienceConfiguration) (*ScienceService, error) {
 
 	s := &ScienceService{}
 
 	s.meteoProv = ms
 	s.strokeProv = ls
 	s.stProv = sp
+	s.corrPointProv = cpp
 
 	for _, cfg := range cfgs {
 		err := cfg(s)
@@ -67,7 +76,7 @@ func (s *ScienceService) Close() {
 	s.stProv.Close()
 }
 
-func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint, error) {
+func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	op := "science.MakeResearch"
 
@@ -79,10 +88,10 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	points := make([]*models.CorrPoint, 0, 1000)
+	// points := make([]*models.CorrPoint, 0, 1000)
 	t := time.Now()
 
 	for _, el := range stations {
@@ -139,7 +148,12 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 				// point.SetlActivity(&la)
 				point.LightningActivity = &la
 
-				points = append(points, point)
+				// points = append(points, point)
+
+				err = s.corrPointProv.SaveCorrpoint(ctx, *point)
+				if err != nil {
+					s.log.Error("unable to save corrpoint", sl.Err(err))
+				}
 
 				begin = begin.Add(resCfg.Dur)
 
@@ -153,5 +167,5 @@ func (s *ScienceService) MakeResearch(ctx context.Context) ([]*models.CorrPoint,
 
 	fmt.Printf("research took %v", time.Since(t))
 
-	return points, nil
+	return nil
 }
