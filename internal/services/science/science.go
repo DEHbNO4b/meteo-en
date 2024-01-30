@@ -169,3 +169,10 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	return nil
 }
+
+func (s *ScienceService) CalculateCorr() ([]string, error) {
+	ans := make([]string, 0, 16)
+
+	return ans, nil
+
+}

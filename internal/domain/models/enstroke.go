@@ -8,8 +8,8 @@ type StrokeEN struct {
 	nano    int64
 	lat     float64
 	long    float64
-	signal  int
-	height  int
+	signal  int64
+	height  int64
 	sensors int16
 	id      int64
 }
@@ -29,10 +29,10 @@ func (l *StrokeEN) Lat() float64 {
 func (l *StrokeEN) Long() float64 {
 	return l.long
 }
-func (l *StrokeEN) Signal() int {
+func (l *StrokeEN) Signal() int64 {
 	return l.signal
 }
-func (l *StrokeEN) Height() int {
+func (l *StrokeEN) Height() int64 {
 	return l.height
 }
 func (l *StrokeEN) Sensors() int16 {
@@ -57,10 +57,10 @@ func (l *StrokeEN) SetLat(lat float64) {
 func (l *StrokeEN) SetLong(long float64) {
 	l.long = long
 }
-func (l *StrokeEN) SetSignal(s int) {
+func (l *StrokeEN) SetSignal(s int64) {
 	l.signal = s
 }
-func (l *StrokeEN) SetHeight(h int) {
+func (l *StrokeEN) SetHeight(h int64) {
 	l.height = h
 }
 func (l *StrokeEN) SetSensors(s int16) {

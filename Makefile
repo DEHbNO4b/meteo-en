@@ -1,4 +1,4 @@
-run:
+research:
 	go build ./cmd/researcher
 	./researcher 
 

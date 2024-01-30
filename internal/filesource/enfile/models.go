@@ -10,7 +10,7 @@ type stroke struct {
 	Nano    int64
 	Lat     float64
 	Long    float64
-	Signal  int
-	Height  int
+	Signal  int64
+	Height  int64
 	Sensors int16
 }

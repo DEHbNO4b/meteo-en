@@ -13,11 +13,12 @@ func meteoToDomain(md meteoData) (models.MeteoData, error) {
 	dmd := models.MeteoData{}
 
 	// parsing datetime
-	time, err := time.Parse("02.01.06 15:04", md.Date+" "+md.Time)
+	t, err := time.Parse("02.01.06 15:04", md.Date+" "+md.Time)
 	if err != nil {
 		return dmd, fmt.Errorf("unable to parse date %w", err)
 
 	}
+	t2 := t.Add(-3 * time.Hour)
 
 	// parsing temperature
 	temp, err := strconv.ParseFloat(md.TempOut, 64)
@@ -62,7 +63,7 @@ func meteoToDomain(md meteoData) (models.MeteoData, error) {
 	}
 
 	dmd.StName = md.FileName
-	dmd.Time = time
+	dmd.Time = t2
 	dmd.TempOut = temp
 	dmd.WindSpeed = speed
 	dmd.WindDir = md.WindDir

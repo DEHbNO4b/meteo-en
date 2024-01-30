@@ -66,8 +66,8 @@ func makeStroke(rec []string) (stroke, error) {
 	s.Nano = int64(nano)
 	s.Lat = lat
 	s.Long = long
-	s.Signal = signal
-	s.Height = height
+	s.Signal = int64(signal)
+	s.Height = int64(height)
 	s.Sensors = int16(sensors)
 
 	return s, nil

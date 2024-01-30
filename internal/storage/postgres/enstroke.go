@@ -99,7 +99,7 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 		var (
 			lat, long      float64
 			cloud          bool
-			signal, height int
+			signal, height int64
 			stroke         models.StrokeEN
 		)
 		if err := rows.Scan(&cloud, &lat, &long, &signal, &height); err != nil {
