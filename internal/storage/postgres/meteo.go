@@ -72,6 +72,7 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 	// mdb.log.Info(op)
 
 	mp := models.MeteoParams{}
+	// fmt.Println(t, t.Add(dur))
 
 	rows, err := mdb.db.QueryContext(ctx, `SELECT AVG(wind_speed),AVG(rain),AVG(rain_rate),MAX(wind_speed),MAX(rain),MAX(rain_rate)
 	 								FROM meteodata WHERE $1 LIKE '%'||station||'%'  AND time BETWEEN $2 AND $3`,

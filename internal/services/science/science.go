@@ -84,7 +84,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	resCfg := cfg.Flags
 
-	semaphore := semaphore.NewSemaphore(15)
+	semaphore := semaphore.NewSemaphore(10)
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
@@ -124,13 +124,21 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 					// continue
 					return
 				}
+
 				ldur := resCfg.Dur.Nanoseconds() * int64(locI)
 
-				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, begin.Add(time.Duration(ldur)), resCfg.Dur)
+				locT := begin
+				locT.Add(time.Duration(ldur))
+				// fmt.Println(locT)
+
+				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, locT, resCfg.Dur)
 				if err != nil {
 					s.log.Error(op, sl.Err(err))
 					// continue
 					return
+				}
+				if mParam.MaxWindSpeed != 0 {
+					fmt.Printf("%+v\n", mParam.MaxWindSpeed)
 				}
 
 				strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, begin, resCfg.Dur)
