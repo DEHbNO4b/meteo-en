@@ -128,7 +128,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 				ldur := resCfg.Dur.Nanoseconds() * int64(locI)
 
 				locT := begin
-				locT.Add(time.Duration(ldur))
+				locT = locT.Add(time.Duration(ldur))
 				// fmt.Println(locT)
 
 				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, locT, resCfg.Dur)
@@ -137,11 +137,9 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 					// continue
 					return
 				}
-				if mParam.MaxWindSpeed != 0 {
-					fmt.Printf("%+v\n", mParam.MaxWindSpeed)
-				}
+				// s.log.Info("mParam", slog.Any("", mParam))
 
-				strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, begin, resCfg.Dur)
+				strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, locT, resCfg.Dur)
 				if err != nil {
 					s.log.Error(op, sl.Err(err))
 					// continue

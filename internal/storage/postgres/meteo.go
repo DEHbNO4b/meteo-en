@@ -69,52 +69,58 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 
 	op := "storage/postgres/MeteoData.StationMeteoParamsByTime"
 
+	// log := mdb.log.With(op)
+
 	// mdb.log.Info(op)
 
+	// mdb.log.Info(op, slog.Time("time", t))
 	mp := models.MeteoParams{}
 	// fmt.Println(t, t.Add(dur))
 
-	rows, err := mdb.db.QueryContext(ctx, `SELECT AVG(wind_speed),AVG(rain),AVG(rain_rate),MAX(wind_speed),MAX(rain),MAX(rain_rate)
+	row := mdb.db.QueryRowContext(ctx, `SELECT AVG(wind_speed),AVG(rain),AVG(rain_rate),MAX(wind_speed),MAX(rain),MAX(rain_rate)
 	 								FROM meteodata WHERE $1 LIKE '%'||station||'%'  AND time BETWEEN $2 AND $3`,
 		st.Name(), t, t.Add(dur))
-	if err != nil {
+	// if err != nil {
+	// 	if errors.Is(sql.ErrNoRows, err) {
+	// 		return mp, storage.ErrNoDataFound
+	// 	}
 
-		if errors.Is(sql.ErrNoRows, err) {
-			return mp, storage.ErrNoDataFound
-		}
+	// 	return mp, fmt.Errorf("%s %w", op, err)
+	// }
+	// defer rows.Close()
 
+	// for rows.Next() {
+
+	var (
+		windSpeed, rain, rainRate          sql.NullFloat64
+		maxWindSpeed, maxRain, maxRainRate sql.NullFloat64
+	)
+	if err := row.Scan(&windSpeed, &rain, &rainRate, &maxWindSpeed, &maxRain, &maxRainRate); err != nil {
 		return mp, fmt.Errorf("%s %w", op, err)
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var (
-			windSpeed, rain, rainRate          sql.NullFloat64
-			maxWindSpeed, maxRain, maxRainRate sql.NullFloat64
-		)
-		if err := rows.Scan(&windSpeed, &rain, &rainRate, &maxWindSpeed, &maxRain, &maxRainRate); err != nil {
-			return mp, fmt.Errorf("%s %w", op, err)
-		}
+	if windSpeed.Valid {
+		mp.WindSpeed = windSpeed.Float64
+	}
+	if rain.Valid {
+		mp.Rain = rain.Float64
+	}
+	if rainRate.Valid {
+		mp.RainRate = rainRate.Float64
+	}
+	if maxWindSpeed.Valid {
+		mp.MaxWindSpeed = maxWindSpeed.Float64
+	}
+	if maxRain.Valid {
+		mp.MaxRain = maxRain.Float64
+	}
+	if maxRainRate.Valid {
+		mp.MaxRainRate = maxRainRate.Float64
+	}
 
-		if windSpeed.Valid {
-			mp.WindSpeed = windSpeed.Float64
-		}
-		if rain.Valid {
-			mp.Rain = rain.Float64
-		}
-		if rainRate.Valid {
-			mp.RainRate = rainRate.Float64
-		}
-		if maxWindSpeed.Valid {
-			mp.MaxWindSpeed = maxWindSpeed.Float64
-		}
-		if maxRain.Valid {
-			mp.MaxRain = maxRain.Float64
-		}
-		if maxRainRate.Valid {
-			mp.MaxRainRate = maxRainRate.Float64
-		}
-
+	// }
+	if mp.WindSpeed == 0 && mp.Rain == 0 && mp.RainRate == 0 && mp.MaxWindSpeed == 0 && mp.MaxRain == 0 && mp.MaxRainRate == 0 {
+		return mp, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
 	}
 
 	return mp, nil

@@ -27,6 +27,7 @@ func NewLActivity(strokes []*StrokeEN) LightningActivity {
 		clouds  float64
 		grounds float64
 	)
+
 	for _, el := range strokes {
 		if el.Signal() > 0 {
 			poz = (poz + el.Signal()) / 2
@@ -39,7 +40,8 @@ func NewLActivity(strokes []*StrokeEN) LightningActivity {
 				maxNeg = el.Signal()
 			}
 		}
-		sigAbs = (sigAbs + math.Abs(float64(el.signal))/2)
+
+		sigAbs = (sigAbs + math.Abs(float64(el.signal))) / 2
 		if el.Cloud() {
 			clouds++
 		} else {

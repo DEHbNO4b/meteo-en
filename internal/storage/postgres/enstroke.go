@@ -115,6 +115,15 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 		strokes = append(strokes, &stroke)
 	}
 
+	if err = rows.Err(); err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			return nil, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
+		}
+
+		edb.log.Error(op, sl.Err(err))
+		return nil, fmt.Errorf("%s %w", op, err)
+	}
+
 	// la.Strokes = strokes
 
 	return strokes, nil
