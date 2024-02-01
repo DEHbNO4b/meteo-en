@@ -1,1 +1,1 @@
-ALTER TABLE corrpoints ADD COLUMN avg_signal numeric(8,2);
+ALTER TABLE corrpoints ADD COLUMN abs_signal numeric(8,2);

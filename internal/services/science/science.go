@@ -133,7 +133,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, locT, resCfg.Dur)
 				if err != nil {
-					s.log.Error(op, sl.Err(err))
+					// s.log.Error(op, sl.Err(err))
 					// continue
 					return
 				}
@@ -145,6 +145,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 					// continue
 					return
 				}
+				fmt.Println(len(strokes))
 
 				// point.SetMParams(&mParam)
 				point.MeteoParams = &mParam
@@ -177,8 +178,8 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 }
 
 func (s *ScienceService) CalculateCorr() ([]string, error) {
+
 	ans := make([]string, 0, 16)
 
 	return ans, nil
-
 }

@@ -86,6 +86,7 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 									AND time BETWEEN $5 AND $6`,
 		sq.LowerLeft.Lat(), sq.UpperLeft.Lat(), sq.UpperLeft.Long(), sq.UpperRight.Long(), t, t.Add(dur))
 	if err != nil {
+		fmt.Println(err)
 		if errors.Is(sql.ErrNoRows, err) {
 			return nil, storage.ErrNoDataFound
 		}
@@ -103,6 +104,7 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 			stroke         models.StrokeEN
 		)
 		if err := rows.Scan(&cloud, &lat, &long, &signal, &height); err != nil {
+			fmt.Println(err)
 			return nil, fmt.Errorf("%s %w", op, err)
 		}
 
@@ -116,6 +118,7 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 	}
 
 	if err = rows.Err(); err != nil {
+		fmt.Println(err)
 		if errors.Is(sql.ErrNoRows, err) {
 			return nil, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
 		}
@@ -126,6 +129,12 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 
 	// la.Strokes = strokes
 
+	if len(strokes) == 0 {
+		return nil, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
+	}
+
 	return strokes, nil
 
 }
+
+// SELECT cloud,latitude,longitude,signal,height from enstrikes 	where time BETWEEN '2025-01-01' AND '2025-10-01'
