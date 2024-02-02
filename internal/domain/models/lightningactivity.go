@@ -95,6 +95,10 @@ func (la *LightningActivity) SetGroundTypeRelation(r float64) {
 	la.groundTypeRelation = r
 }
 
+func (la *LightningActivity) SetAbsSig(as float64) {
+	la.signalAbs = as
+}
+
 func (la *LightningActivity) Count() int {
 	return la.count
 }

@@ -79,7 +79,7 @@ func (edb *EnDB) StationLightningActivityByTime(ctx context.Context, st models.S
 
 	sq := st.CalculateSquareCorners(cfg.Flags.Radius)
 
-	// fmt.Println("in LA query ", sq.LowerLeft.Lat(), sq.UpperLeft.Lat(), sq.UpperLeft.Long(), sq.UpperRight.Long(), t, t.Add(dur))
+	// fmt.Println("in LA query ", t, t.Add(dur))
 
 	rows, err := edb.db.QueryContext(ctx, `SELECT cloud,latitude,longitude,signal,height from enstrikes 
 									WHERE latitude BETWEEN $1 AND $2  AND longitude BETWEEN $3 AND $4

@@ -14,7 +14,7 @@ import (
 
 type MeteoSource interface {
 	// MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.Time, s models.Station) ([]models.MeteoData, error)
-	StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (models.MeteoParams, error)
+	StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (*models.MeteoParams, error)
 	Close()
 }
 type StationsProvider interface {
@@ -28,6 +28,8 @@ type LightningSource interface {
 }
 type CorrPointProvider interface {
 	SaveCorrpoint(ctx context.Context, cp models.CorrPoint) error
+	CorrParams(ctx context.Context) ([]models.CorrPoint, error)
+	Close()
 }
 
 type ScienceConfiguration func(os *ScienceService) error
@@ -74,6 +76,7 @@ func (s *ScienceService) Close() {
 	s.meteoProv.Close()
 	s.strokeProv.Close()
 	s.stProv.Close()
+	s.corrPointProv.Close()
 }
 
 func (s *ScienceService) MakeResearch(ctx context.Context) error {
@@ -84,7 +87,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	resCfg := cfg.Flags
 
-	semaphore := semaphore.NewSemaphore(10)
+	semaphore := semaphore.NewSemaphore(15)
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
@@ -110,9 +113,6 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 			wg.Add(1)
 			semaphore.Acquire()
 
-			// fmt.Println("iteration:", locI)
-			// fmt.Println(begin.Add(time.Duration(resCfg.Dur.Nanoseconds() * int64(locI))))
-
 			go func() {
 
 				defer wg.Done()
@@ -121,7 +121,6 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 				point, err := models.NewCorrPoint(&station, resCfg.Dur)
 				if err != nil {
 					s.log.Error(op, sl.Err(err))
-					// continue
 					return
 				}
 
@@ -129,40 +128,34 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 				locT := begin
 				locT = locT.Add(time.Duration(ldur))
-				// fmt.Println(locT)
+
+				strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, locT, resCfg.Dur)
+				if err != nil {
+					// s.log.Error(op, sl.Err(err))
+					// return
+				}
 
 				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, locT, resCfg.Dur)
 				if err != nil {
 					// s.log.Error(op, sl.Err(err))
-					// continue
+					// return
+				}
+				if len(strokes) == 0 && mParam == nil {
 					return
 				}
-				// s.log.Info("mParam", slog.Any("", mParam))
-
-				strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, locT, resCfg.Dur)
-				if err != nil {
-					s.log.Error(op, sl.Err(err))
-					// continue
-					return
-				}
-				fmt.Println(len(strokes))
-
-				// point.SetMParams(&mParam)
-				point.MeteoParams = &mParam
+				s.log.Info("succes calc corrpoint")
+				point.MeteoParams = mParam
 
 				la := models.NewLActivity(strokes)
 
-				// point.SetlActivity(&la)
 				point.LightningActivity = &la
-
-				// points = append(points, point)
 
 				err = s.corrPointProv.SaveCorrpoint(ctx, *point)
 				if err != nil {
 					s.log.Error("unable to save corrpoint", sl.Err(err))
 				}
 
-				begin = begin.Add(resCfg.Dur)
+				// begin = begin.Add(resCfg.Dur)
 
 			}()
 
@@ -177,7 +170,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 	return nil
 }
 
-func (s *ScienceService) CalculateCorr() ([]string, error) {
+func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 
 	ans := make([]string, 0, 16)
 

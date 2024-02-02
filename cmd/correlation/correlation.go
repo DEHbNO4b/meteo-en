@@ -2,10 +2,12 @@ package correlation
 
 import (
 	"context"
+	"log/slog"
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/services/science"
 	"meteo-lightning/internal/storage/postgres"
+	"strconv"
 )
 
 func main() {
@@ -34,9 +36,12 @@ func run() error {
 	}
 	defer srv.Close()
 
-	err = srv.MakeResearch(ctx) // make research
+	corr, err := srv.CalculateCorr(ctx) // make research
 	if err != nil {
 		return err
+	}
+	for i, el := range corr {
+		log.Info("correlation", slog.String(strconv.Itoa(i), el))
 	}
 
 	// TODO: save results
