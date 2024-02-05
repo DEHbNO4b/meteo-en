@@ -91,7 +91,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	resCfg := cfg.Flags
 
-	semaphore := semaphore.NewSemaphore(5)
+	semaphore := semaphore.NewSemaphore(3)
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
@@ -188,53 +188,93 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 
 	ans := make([]string, 0, 16)
+
 	pairs := make([]*models.Pair, 0, 10)
 
-	cors, err := s.corrPointProv.CorrParams(ctx)
+	// gettting correlation points from BD
+	corrs, err := s.corrPointProv.CorrParams(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	// creating pairs "meteo parameter - lightning activity parameter"
+
 	ws_count := models.NewPair("wind speed - lightning count")
-	rr_count := models.NewPair("rain rait- lightning count")
-	r_count := models.NewPair("rain - lightning count")
-
 	ws_absSig := models.NewPair("wind speed - absolut signal")
-	rr_absSig := models.NewPair("rain rait- absolut signal")
-	r_absSig := models.NewPair("rain - absolut signal")
+	ws_maxNeg := models.NewPair("wind speed - max negative signal")
+	ws_maxPoz := models.NewPair("wind speed - max pozitive signal")
+	ws_cloud := models.NewPair("wind speed - cloud type relation")
 
-	ws_maxNeg := models.NewPair("wind speed - max negaqtive signal")
-	rr_maxNeg := models.NewPair("rain rait- max negaqtive signal")
-	r_maxNeg := models.NewPair("rain - max negaqtive signal")
+	hws_count := models.NewPair("hi speed - lightning count")
+	hws_absSig := models.NewPair("hi speed - absolut signal")
+	hws_maxNeg := models.NewPair("hi speed - max negative signal")
+	hws_maxPoz := models.NewPair("hi speed - max pozitive signal")
+	hws_cloud := models.NewPair("hi speed - cloud type relation")
+
+	r_count := models.NewPair("rain - lightning count")
+	r_absSig := models.NewPair("rain - absolut signal")
+	r_maxNeg := models.NewPair("rain - max negative signal")
+	r_maxPoz := models.NewPair("rain - max pozitive signal")
+	r_cloud := models.NewPair("rain - cloud type relation")
+
+	rr_count := models.NewPair("rain rait- lightning count")
+	rr_absSig := models.NewPair("rain rait- absolut signal")
+	rr_maxNeg := models.NewPair("rain rait- max negative signal")
+	rr_maxPoz := models.NewPair("rain rait- max pozitive signal")
+	rr_cloud := models.NewPair("rain rait- cloud type relation")
 
 	pairs = append(pairs, ws_count)
-	pairs = append(pairs, rr_count)
-	pairs = append(pairs, r_count)
 	pairs = append(pairs, ws_absSig)
-	pairs = append(pairs, rr_absSig)
-	pairs = append(pairs, r_absSig)
 	pairs = append(pairs, ws_maxNeg)
-	pairs = append(pairs, rr_maxNeg)
+	pairs = append(pairs, ws_maxPoz)
+	pairs = append(pairs, ws_cloud)
+	pairs = append(pairs, hws_count)
+	pairs = append(pairs, hws_absSig)
+	pairs = append(pairs, hws_maxNeg)
+	pairs = append(pairs, hws_maxPoz)
+	pairs = append(pairs, hws_cloud)
+	pairs = append(pairs, r_count)
+	pairs = append(pairs, r_absSig)
 	pairs = append(pairs, r_maxNeg)
+	pairs = append(pairs, r_maxPoz)
+	pairs = append(pairs, r_cloud)
+	pairs = append(pairs, rr_count)
+	pairs = append(pairs, rr_absSig)
+	pairs = append(pairs, rr_maxNeg)
+	pairs = append(pairs, rr_maxPoz)
+	pairs = append(pairs, rr_cloud)
 
-	for _, cp := range cors {
+	for _, cp := range corrs {
 
-		// if cp.MaxRain > 0.1 {
-		r_count.AddPair(cp.MaxRain, float64(cp.Count()))
-		r_absSig.AddPair(cp.MaxRain, cp.AbsSig())
-		r_maxNeg.AddPair(cp.MaxRain, float64(cp.MaxNegSig()))
-		// }
-
-		if cp.HiSpeed > 2.0 {
-			ws_count.AddPair(cp.HiSpeed, float64(cp.Count()))
-			ws_absSig.AddPair(cp.HiSpeed, cp.AbsSig())
-			ws_maxNeg.AddPair(cp.HiSpeed, float64(cp.MaxNegSig()))
+		if cp.MaxRain > 0.3 {
+			r_count.AddPair(cp.MaxRain, float64(cp.Count()))
+			r_absSig.AddPair(cp.MaxRain, cp.AbsSig())
+			r_maxNeg.AddPair(cp.MaxRain, float64(cp.MaxNegSig()))
+			r_maxPoz.AddPair(cp.MaxRain, float64(cp.MaxPozSig()))
+			r_cloud.AddPair(cp.MaxRain, cp.CloudTypeRel())
 		}
-		// if cp.MaxRainRate > 3 {
-		rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
-		rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
-		rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
-		// }
+
+		if cp.HiSpeed > 3 {
+			hws_count.AddPair(cp.HiSpeed, float64(cp.Count()))
+			hws_absSig.AddPair(cp.HiSpeed, cp.AbsSig())
+			hws_maxNeg.AddPair(cp.HiSpeed, float64(cp.MaxNegSig()))
+			hws_maxPoz.AddPair(cp.HiSpeed, float64(cp.MaxPozSig()))
+			hws_cloud.AddPair(cp.HiSpeed, cp.CloudTypeRel())
+		}
+		if cp.WindSpeed > 0.1 {
+			ws_count.AddPair(cp.WindSpeed, float64(cp.Count()))
+			ws_absSig.AddPair(cp.WindSpeed, cp.AbsSig())
+			ws_maxNeg.AddPair(cp.WindSpeed, float64(cp.MaxNegSig()))
+			ws_maxPoz.AddPair(cp.WindSpeed, float64(cp.MaxPozSig()))
+			ws_cloud.AddPair(cp.WindSpeed, cp.CloudTypeRel())
+		}
+		if cp.MaxRainRate > 3 {
+			rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
+			rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
+			rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
+			rr_maxPoz.AddPair(cp.MaxRainRate, float64(cp.MaxPozSig()))
+			rr_cloud.AddPair(cp.MaxRainRate, cp.CloudTypeRel())
+		}
 
 	}
 

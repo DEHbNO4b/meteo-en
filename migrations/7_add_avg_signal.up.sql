@@ -1,1 +1,0 @@
-ALTER TABLE corrpoints ADD COLUMN abs_signal numeric(8,2);

@@ -32,17 +32,34 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	t, err := migrate.New(
+		"file://"+migrationsPath,
+		"postgres://test:test@localhost:5432/test?sslmode=disable",
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	// if err := m.Down(); err != nil {
 	// 	panic(err)
 	// }
+
 	if err := m.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
-			fmt.Println("no migration change")
+			fmt.Println("osya: no migration change")
+
+		}
+		// panic(err)
+	}
+
+	if err := t.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			fmt.Println("test: no migration change")
 			return
 		}
 		panic(err)
 	}
+
 	fmt.Println("migrations applyed")
 
 }

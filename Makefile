@@ -14,3 +14,9 @@ read_meteo:
 read_en:
 	go build ./cmd/en
 	./en
+
+build_corr:
+	go build -o . ./cmd/correlation
+
+calc: build_corr
+	./correlation

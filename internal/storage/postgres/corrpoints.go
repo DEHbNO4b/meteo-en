@@ -55,7 +55,7 @@ func (cdb *CorrpointDB) CorrParams(ctx context.Context) ([]models.CorrPoint, err
 
 	rows, err := cdb.db.QueryContext(ctx, `SELECT wind_speed,maxwind_speed,rain,max_rain,rain_rate,maxrain_rate,
 	count,maxpozitivesignal,maxnegativesignal,pozitivesignal,negativesignal,cloudtyperelation,groundtyperelation,abs_signal 
-	FROM corrpoints where station like 'Umaeva'`)
+	FROM corrpoints`)
 	//where station like 'Chamlik' where station like 'Labinsk' or station like 'VGI'
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", op, err)
