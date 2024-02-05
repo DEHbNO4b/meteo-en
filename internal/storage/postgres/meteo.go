@@ -69,15 +69,16 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 
 	mp := models.MeteoParams{}
 
-	row := mdb.db.QueryRowContext(ctx, `SELECT AVG(wind_speed),AVG(rain),AVG(rain_rate),MAX(wind_speed),MAX(rain),MAX(rain_rate)
+	row := mdb.db.QueryRowContext(ctx, `SELECT count(*),AVG(wind_speed),AVG(rain),AVG(rain_rate),MAX(wind_speed),MAX(rain),MAX(rain_rate)
 	 								FROM meteodata as m WHERE m.station ~ $1   AND time BETWEEN $2 AND $3`,
 		st.Name(), t, t.Add(dur))
 
 	var (
+		count                              int
 		windSpeed, rain, rainRate          sql.NullFloat64
 		maxWindSpeed, maxRain, maxRainRate sql.NullFloat64
 	)
-	if err := row.Scan(&windSpeed, &rain, &rainRate, &maxWindSpeed, &maxRain, &maxRainRate); err != nil {
+	if err := row.Scan(&count, &windSpeed, &rain, &rainRate, &maxWindSpeed, &maxRain, &maxRainRate); err != nil {
 		return nil, fmt.Errorf("%s %w", op, err)
 	}
 
@@ -100,7 +101,7 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 		mp.MaxRainRate = maxRainRate.Float64
 	}
 
-	if mp.WindSpeed == 0 && mp.Rain == 0 && mp.RainRate == 0 && mp.MaxWindSpeed == 0 && mp.MaxRain == 0 && mp.MaxRainRate == 0 {
+	if count == 0 {
 		return nil, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
 	}
 

@@ -1,4 +1,4 @@
-package correlation
+package main
 
 import (
 	"context"
@@ -34,13 +34,13 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	defer srv.Close()
+	// defer srv.Close()
 
-	corr, err := srv.CalculateCorr(ctx) // make research
+	corrs, err := srv.CalculateCorr(ctx) // make research
 	if err != nil {
 		return err
 	}
-	for i, el := range corr {
+	for i, el := range corrs {
 		log.Info("correlation", slog.String(strconv.Itoa(i), el))
 	}
 

@@ -10,6 +10,8 @@ import (
 	"meteo-lightning/internal/lib/semaphore"
 	"sync"
 	"time"
+
+	"github.com/montanaflynn/stats"
 )
 
 type MeteoSource interface {
@@ -87,7 +89,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	resCfg := cfg.Flags
 
-	semaphore := semaphore.NewSemaphore(15)
+	semaphore := semaphore.NewSemaphore(5)
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
@@ -129,17 +131,18 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 				locT := begin
 				locT = locT.Add(time.Duration(ldur))
 
+				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, locT, resCfg.Dur)
+				if err != nil {
+					// s.log.Error(op, sl.Err(err))s
+					return
+				}
+
 				strokes, err := s.strokeProv.StationLightningActivityByTime(ctx, station, locT, resCfg.Dur)
 				if err != nil {
 					// s.log.Error(op, sl.Err(err))
 					// return
 				}
 
-				mParam, err := s.meteoProv.StationMeteoParamsByTime(ctx, station, locT, resCfg.Dur)
-				if err != nil {
-					// s.log.Error(op, sl.Err(err))
-					// return
-				}
 				if len(strokes) == 0 && mParam == nil {
 					return
 				}
@@ -173,6 +176,56 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 
 	ans := make([]string, 0, 16)
+
+	cors, err := s.corrPointProv.CorrParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		ws, rr, count []float64
+	)
+	_ = rr
+
+	for _, cp := range cors {
+		// if cp.MaxRainRate > 3 {
+
+		// 	rr = append(rr, cp.MaxRainRate)
+		// }
+		if cp.MaxWindSpeed > 4 {
+
+			ws = append(ws, cp.MaxWindSpeed)
+		} else {
+			continue
+		}
+		count = append(count, float64(cp.Count()))
+
+	}
+	fmt.Println("len: ", len(ws))
+
+	corrMWS_count, err := stats.Correlation(ws, count)
+	if err != nil {
+		return nil, err
+	}
+	corrMWS_count, err = stats.Round(corrMWS_count, 5)
+	if err != nil {
+		return nil, err
+	}
+
+	// corrMRR_count, err := stats.Correlation(rr, count)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// corrMRR_count, err = stats.Round(corrMRR_count, 5)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	s1 := fmt.Sprintf("correlation maxwind_speed-count = %v", corrMWS_count)
+	// s2 := fmt.Sprintf("correlation maxrain_rate-count = %v", corrMRR_count)
+
+	ans = append(ans, s1)
+	// ans = append(ans, s2)
 
 	return ans, nil
 }
