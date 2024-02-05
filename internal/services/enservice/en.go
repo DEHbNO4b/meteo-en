@@ -9,6 +9,7 @@ type ENStore interface {
 	SaveEnData(ctx context.Context, data []models.StrokeEN) error
 	Close()
 }
+
 type ENService struct {
 	enDB ENStore
 }

@@ -107,6 +107,7 @@ func makeData(rec []string) meteoData {
 	md.WindSpeed = rec[7]
 	md.WindDir = rec[8]
 	md.WindRun = rec[9]
+	md.HiSpeed = rec[10]
 	md.WindChill = rec[12]
 	md.Bar = rec[15]
 	md.Rain = rec[16]

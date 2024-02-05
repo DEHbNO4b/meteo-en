@@ -56,6 +56,11 @@ func meteoToDomain(md meteoData) (models.MeteoData, error) {
 		// return dmd, fmt.Errorf("unable to parse WindRun %w", err)
 		run = math.NaN()
 	}
+	hiSpeed, err := strconv.ParseFloat(md.HiSpeed, 64)
+	if err != nil {
+		// return dmd, fmt.Errorf("unable to parse WindRun %w", err)
+		hiSpeed = math.NaN()
+	}
 	chill, err := strconv.ParseFloat(md.WindChill, 64)
 	if err != nil {
 		// return dmd, fmt.Errorf("unable to parse WindChill %w", err)
@@ -68,6 +73,7 @@ func meteoToDomain(md meteoData) (models.MeteoData, error) {
 	dmd.WindSpeed = speed
 	dmd.WindDir = md.WindDir
 	dmd.WindRun = run
+	dmd.HiSpeed = hiSpeed
 	dmd.WindChill = chill
 	dmd.Bar = bar
 	dmd.Rain = rain

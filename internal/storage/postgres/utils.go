@@ -12,7 +12,7 @@ func domainMeteoParToLoc(mp *models.MeteoParams) MeteoParams {
 
 	lmp.MaxRain = mp.MaxRain
 	lmp.MaxRainRate = mp.MaxRainRate
-	lmp.MaxWindSpeed = mp.MaxWindSpeed
+	lmp.MaxWindSpeed = mp.HiSpeed
 	lmp.Rain = mp.Rain
 	lmp.RainRate = mp.RainRate
 	lmp.WindSpeed = mp.WindSpeed

@@ -8,17 +8,18 @@ import (
 	"meteo-lightning/internal/domain/models"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/lib/semaphore"
+	"sort"
 	"sync"
 	"time"
-
-	"github.com/montanaflynn/stats"
 )
 
 type MeteoSource interface {
 	// MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.Time, s models.Station) ([]models.MeteoData, error)
 	StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (*models.MeteoParams, error)
+	StationDataTimes(ctx context.Context, st models.Station) (time.Time, time.Time, error)
 	Close()
 }
+
 type StationsProvider interface {
 	Stations(ctx context.Context) ([]models.Station, error)
 	Close()
@@ -28,6 +29,7 @@ type LightningSource interface {
 	StationLightningActivityByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) ([]*models.StrokeEN, error)
 	Close()
 }
+
 type CorrPointProvider interface {
 	SaveCorrpoint(ctx context.Context, cp models.CorrPoint) error
 	CorrParams(ctx context.Context) ([]models.CorrPoint, error)
@@ -102,9 +104,19 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 	for _, el := range stations {
 
 		station := el
+
 		// _ = el
 		s.log.Info("", slog.Any("station", el))
 		begin := resCfg.Begin
+
+		max, min, err := s.meteoProv.StationDataTimes(ctx, station)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		if min.After(resCfg.End) || max.Before(begin) {
+			continue
+		}
 
 		wg := sync.WaitGroup{}
 
@@ -146,7 +158,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 				if len(strokes) == 0 && mParam == nil {
 					return
 				}
-				s.log.Info("succes calc corrpoint")
+				// s.log.Info("succes calc corrpoint")
 				point.MeteoParams = mParam
 
 				la := models.NewLActivity(strokes)
@@ -176,56 +188,67 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 
 	ans := make([]string, 0, 16)
+	pairs := make([]*models.Pair, 0, 10)
 
 	cors, err := s.corrPointProv.CorrParams(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var (
-		ws, rr, count []float64
-	)
-	_ = rr
+	ws_count := models.NewPair("wind speed - lightning count")
+	rr_count := models.NewPair("rain rait- lightning count")
+	r_count := models.NewPair("rain - lightning count")
+
+	ws_absSig := models.NewPair("wind speed - absolut signal")
+	rr_absSig := models.NewPair("rain rait- absolut signal")
+	r_absSig := models.NewPair("rain - absolut signal")
+
+	ws_maxNeg := models.NewPair("wind speed - max negaqtive signal")
+	rr_maxNeg := models.NewPair("rain rait- max negaqtive signal")
+	r_maxNeg := models.NewPair("rain - max negaqtive signal")
+
+	pairs = append(pairs, ws_count)
+	pairs = append(pairs, rr_count)
+	pairs = append(pairs, r_count)
+	pairs = append(pairs, ws_absSig)
+	pairs = append(pairs, rr_absSig)
+	pairs = append(pairs, r_absSig)
+	pairs = append(pairs, ws_maxNeg)
+	pairs = append(pairs, rr_maxNeg)
+	pairs = append(pairs, r_maxNeg)
 
 	for _, cp := range cors {
-		// if cp.MaxRainRate > 3 {
 
-		// 	rr = append(rr, cp.MaxRainRate)
+		// if cp.MaxRain > 0.1 {
+		r_count.AddPair(cp.MaxRain, float64(cp.Count()))
+		r_absSig.AddPair(cp.MaxRain, cp.AbsSig())
+		r_maxNeg.AddPair(cp.MaxRain, float64(cp.MaxNegSig()))
 		// }
-		if cp.MaxWindSpeed > 4 {
 
-			ws = append(ws, cp.MaxWindSpeed)
-		} else {
-			continue
+		if cp.HiSpeed > 2.0 {
+			ws_count.AddPair(cp.HiSpeed, float64(cp.Count()))
+			ws_absSig.AddPair(cp.HiSpeed, cp.AbsSig())
+			ws_maxNeg.AddPair(cp.HiSpeed, float64(cp.MaxNegSig()))
 		}
-		count = append(count, float64(cp.Count()))
+		// if cp.MaxRainRate > 3 {
+		rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
+		rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
+		rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
+		// }
 
 	}
-	fmt.Println("len: ", len(ws))
 
-	corrMWS_count, err := stats.Correlation(ws, count)
-	if err != nil {
-		return nil, err
-	}
-	corrMWS_count, err = stats.Round(corrMWS_count, 5)
-	if err != nil {
-		return nil, err
+	for _, el := range pairs {
+		el.Calculate()
 	}
 
-	// corrMRR_count, err := stats.Correlation(rr, count)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// corrMRR_count, err = stats.Round(corrMRR_count, 5)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	sort.SliceStable(pairs, func(i, j int) bool {
+		return pairs[i].CorrCoef() < pairs[j].CorrCoef()
+	})
 
-	s1 := fmt.Sprintf("correlation maxwind_speed-count = %v", corrMWS_count)
-	// s2 := fmt.Sprintf("correlation maxrain_rate-count = %v", corrMRR_count)
-
-	ans = append(ans, s1)
-	// ans = append(ans, s2)
+	for _, el := range pairs {
+		ans = append(ans, el.String())
+	}
 
 	return ans, nil
 }

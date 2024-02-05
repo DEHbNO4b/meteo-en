@@ -1,0 +1,1 @@
+ALTER TABLE meteodata ADD COLUMN hi_speed numeric(6,2);

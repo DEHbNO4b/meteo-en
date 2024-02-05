@@ -9,6 +9,7 @@ type MeteoStore interface {
 	SaveMeteoData(ctx context.Context, data []models.MeteoData) error
 	Close()
 }
+
 type MeteoService struct {
 	meteoDB MeteoStore
 }

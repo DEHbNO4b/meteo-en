@@ -55,8 +55,8 @@ func (cdb *CorrpointDB) CorrParams(ctx context.Context) ([]models.CorrPoint, err
 
 	rows, err := cdb.db.QueryContext(ctx, `SELECT wind_speed,maxwind_speed,rain,max_rain,rain_rate,maxrain_rate,
 	count,maxpozitivesignal,maxnegativesignal,pozitivesignal,negativesignal,cloudtyperelation,groundtyperelation,abs_signal 
-	FROM corrpoints  `)
-	//where station like 'Chamlik'
+	FROM corrpoints where station like 'Umaeva'`)
+	//where station like 'Chamlik' where station like 'Labinsk' or station like 'VGI'
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", op, err)
 	}
@@ -76,7 +76,7 @@ func (cdb *CorrpointDB) CorrParams(ctx context.Context) ([]models.CorrPoint, err
 		cp.LightningActivity = &la
 		cp.MeteoParams = &mp
 
-		if err := rows.Scan(&cp.WindSpeed, &cp.MaxWindSpeed, &cp.Rain, &cp.MaxRain, &cp.RainRate, &cp.MaxRainRate,
+		if err := rows.Scan(&cp.WindSpeed, &cp.HiSpeed, &cp.Rain, &cp.MaxRain, &cp.RainRate, &cp.MaxRainRate,
 			&count, &maxPoz, &maxNeg, &pozSig, &negSig, &cloudT, &groundT, &absSig); err != nil {
 			return nil, fmt.Errorf("%s %w", op, err)
 		}
