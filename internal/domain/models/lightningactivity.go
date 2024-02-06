@@ -29,6 +29,7 @@ func NewLActivity(strokes []*StrokeEN) LightningActivity {
 	)
 
 	for _, el := range strokes {
+
 		if el.Signal() > 0 {
 			poz = (poz + el.Signal()) / 2
 			if el.Signal() > maxPoz {

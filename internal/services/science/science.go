@@ -245,37 +245,37 @@ func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 	pairs = append(pairs, rr_cloud)
 
 	for _, cp := range corrs {
+		if cp.Count() > 0 {
+			if cp.MaxRain > 0.3 {
+				r_count.AddPair(cp.MaxRain, float64(cp.Count()))
+				r_absSig.AddPair(cp.MaxRain, cp.AbsSig())
+				r_maxNeg.AddPair(cp.MaxRain, float64(cp.MaxNegSig()))
+				r_maxPoz.AddPair(cp.MaxRain, float64(cp.MaxPozSig()))
+				r_cloud.AddPair(cp.MaxRain, cp.CloudTypeRel())
+			}
 
-		if cp.MaxRain > 0.3 {
-			r_count.AddPair(cp.MaxRain, float64(cp.Count()))
-			r_absSig.AddPair(cp.MaxRain, cp.AbsSig())
-			r_maxNeg.AddPair(cp.MaxRain, float64(cp.MaxNegSig()))
-			r_maxPoz.AddPair(cp.MaxRain, float64(cp.MaxPozSig()))
-			r_cloud.AddPair(cp.MaxRain, cp.CloudTypeRel())
+			if cp.HiSpeed > 2 {
+				hws_count.AddPair(cp.HiSpeed, float64(cp.Count()))
+				hws_absSig.AddPair(cp.HiSpeed, cp.AbsSig())
+				hws_maxNeg.AddPair(cp.HiSpeed, float64(cp.MaxNegSig()))
+				hws_maxPoz.AddPair(cp.HiSpeed, float64(cp.MaxPozSig()))
+				hws_cloud.AddPair(cp.HiSpeed, cp.CloudTypeRel())
+			}
+			if cp.WindSpeed > 0.25 {
+				ws_count.AddPair(cp.WindSpeed, float64(cp.Count()))
+				ws_absSig.AddPair(cp.WindSpeed, cp.AbsSig())
+				ws_maxNeg.AddPair(cp.WindSpeed, float64(cp.MaxNegSig()))
+				ws_maxPoz.AddPair(cp.WindSpeed, float64(cp.MaxPozSig()))
+				ws_cloud.AddPair(cp.WindSpeed, cp.CloudTypeRel())
+			}
+			if cp.MaxRainRate > 3 {
+				rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
+				rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
+				rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
+				rr_maxPoz.AddPair(cp.MaxRainRate, float64(cp.MaxPozSig()))
+				rr_cloud.AddPair(cp.MaxRainRate, cp.CloudTypeRel())
+			}
 		}
-
-		if cp.HiSpeed > 3 {
-			hws_count.AddPair(cp.HiSpeed, float64(cp.Count()))
-			hws_absSig.AddPair(cp.HiSpeed, cp.AbsSig())
-			hws_maxNeg.AddPair(cp.HiSpeed, float64(cp.MaxNegSig()))
-			hws_maxPoz.AddPair(cp.HiSpeed, float64(cp.MaxPozSig()))
-			hws_cloud.AddPair(cp.HiSpeed, cp.CloudTypeRel())
-		}
-		if cp.WindSpeed > 0.1 {
-			ws_count.AddPair(cp.WindSpeed, float64(cp.Count()))
-			ws_absSig.AddPair(cp.WindSpeed, cp.AbsSig())
-			ws_maxNeg.AddPair(cp.WindSpeed, float64(cp.MaxNegSig()))
-			ws_maxPoz.AddPair(cp.WindSpeed, float64(cp.MaxPozSig()))
-			ws_cloud.AddPair(cp.WindSpeed, cp.CloudTypeRel())
-		}
-		if cp.MaxRainRate > 3 {
-			rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
-			rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
-			rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
-			rr_maxPoz.AddPair(cp.MaxRainRate, float64(cp.MaxPozSig()))
-			rr_cloud.AddPair(cp.MaxRainRate, cp.CloudTypeRel())
-		}
-
 	}
 
 	for _, el := range pairs {
