@@ -91,7 +91,7 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 	resCfg := cfg.Flags
 
-	semaphore := semaphore.NewSemaphore(3)
+	semaphore := semaphore.NewSemaphore(15)
 
 	stations, err := s.stProv.Stations(ctx)
 	if err != nil {
@@ -105,7 +105,6 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 
 		station := el
 
-		// _ = el
 		s.log.Info("", slog.Any("station", el))
 		begin := resCfg.Begin
 
@@ -245,8 +244,9 @@ func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 	pairs = append(pairs, rr_cloud)
 
 	for _, cp := range corrs {
+
 		if cp.Count() > 0 {
-			if cp.MaxRain > 0.3 {
+			if cp.MaxRain > 0.01 {
 				r_count.AddPair(cp.MaxRain, float64(cp.Count()))
 				r_absSig.AddPair(cp.MaxRain, cp.AbsSig())
 				r_maxNeg.AddPair(cp.MaxRain, float64(cp.MaxNegSig()))
@@ -254,7 +254,7 @@ func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 				r_cloud.AddPair(cp.MaxRain, cp.CloudTypeRel())
 			}
 
-			if cp.HiSpeed > 2 {
+			if cp.HiSpeed > 2.5 {
 				hws_count.AddPair(cp.HiSpeed, float64(cp.Count()))
 				hws_absSig.AddPair(cp.HiSpeed, cp.AbsSig())
 				hws_maxNeg.AddPair(cp.HiSpeed, float64(cp.MaxNegSig()))
@@ -268,7 +268,7 @@ func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 				ws_maxPoz.AddPair(cp.WindSpeed, float64(cp.MaxPozSig()))
 				ws_cloud.AddPair(cp.WindSpeed, cp.CloudTypeRel())
 			}
-			if cp.MaxRainRate > 3 {
+			if cp.MaxRainRate > 1 {
 				rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
 				rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
 				rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
