@@ -1,7 +1,10 @@
 package models
 
 import (
+	"encoding/csv"
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/montanaflynn/stats"
 )
@@ -51,6 +54,67 @@ func (p *Pair) Calculate() error {
 
 func (p *Pair) CorrCoef() float64 {
 	return p.corr
+}
+
+func (p *Pair) OutputData() error {
+	file, err := os.Create("./public/out/" + p.name + ".csv")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	r := csv.NewWriter(file)
+	r.Comma = ';'
+
+	record := make([]string, 2, 2)
+
+	for i := range len(p.la) {
+		record[0] = strconv.FormatFloat(p.mp[i], 'f', -1, 64)
+		record[1] = strconv.FormatFloat(p.la[i], 'f', -1, 64)
+		if err := r.Write(record); err != nil {
+			continue
+		}
+	}
+	r.Flush()
+
+	if err := r.Error(); err != nil {
+		return err
+	}
+	return nil
+}
+func (p *Pair) OutputData2() error {
+	file, err := os.Create("./public/out/" + p.name + "_2" + ".csv")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	r := csv.NewWriter(file)
+	r.Comma = ';'
+
+	record := make([]string, len(p.mp))
+
+	for i := range len(p.mp) {
+		record[i] = strconv.FormatFloat(p.mp[i], 'f', -1, 64)
+
+	}
+	if err := r.Write(record); err != nil {
+		return err
+	}
+
+	record1 := make([]string, len(p.la))
+	for i := range len(p.la) {
+		record1[i] = strconv.FormatFloat(p.la[i], 'f', -1, 64)
+
+	}
+	if err := r.Write(record1); err != nil {
+		return err
+	}
+	r.Flush()
+	if err := r.Error(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // type Pairs struct {

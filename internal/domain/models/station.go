@@ -3,8 +3,9 @@ package models
 import "math"
 
 type Station struct {
-	id   int64
-	name string
+	id         int64
+	name       string
+	station_id int64
 	Point
 }
 
@@ -17,12 +18,19 @@ func NewStation(lat, long float64) *Station {
 func (s *Station) SetID(id int64) {
 	s.id = id
 }
+func (s *Station) SetStationID(id int64) {
+	s.station_id = id
+}
+
 func (s *Station) SetName(n string) {
 	s.name = n
 }
 
 func (s *Station) ID() int64 {
 	return s.id
+}
+func (s *Station) StationID() int64 {
+	return s.station_id
 }
 func (s *Station) Name() string {
 	return s.name

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"meteo-lightning/internal/config"
 	"meteo-lightning/internal/lib/logger/sl"
 	"meteo-lightning/internal/services/science"
@@ -31,7 +32,9 @@ func run() error {
 
 	log := sl.SetupLogger(cfg.Env) //log
 
-	mdb, err := postgres.NewMeteoDB(log, cfg.DBconfig.ToString()) // open meteo db
+	fmt.Printf("CFG: %+v\n", cfg)
+
+	mdb, err := postgres.NewRGMMeteoDB(log, cfg.DBconfig.ToString()) // open meteo db
 	if err != nil {
 		return err
 	}

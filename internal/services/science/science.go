@@ -15,7 +15,7 @@ import (
 
 type MeteoSource interface {
 	// MeteoDataByTimeAndStation(ctx context.Context, t1, t2 time.Time, s models.Station) ([]models.MeteoData, error)
-	StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (*models.MeteoParams, error)
+	StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (models.MeteoParams, error)
 	StationDataTimes(ctx context.Context, st models.Station) (time.Time, time.Time, error)
 	Close()
 }
@@ -154,11 +154,11 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 					// return
 				}
 
-				if len(strokes) == 0 && mParam == nil {
+				if len(strokes) == 0 && mParam.WindSpeed == 0 && mParam.Rain == 0 {
 					return
 				}
-				// s.log.Info("succes calc corrpoint")
-				point.MeteoParams = mParam
+
+				point.MeteoParams = &mParam
 
 				la := models.NewLActivity(strokes)
 
@@ -168,8 +168,6 @@ func (s *ScienceService) MakeResearch(ctx context.Context) error {
 				if err != nil {
 					s.log.Error("unable to save corrpoint", sl.Err(err))
 				}
-
-				// begin = begin.Add(resCfg.Dur)
 
 			}()
 
@@ -216,11 +214,11 @@ func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 	r_maxPoz := models.NewPair("rain - max pozitive signal")
 	r_cloud := models.NewPair("rain - cloud type relation")
 
-	rr_count := models.NewPair("rain rait- lightning count")
-	rr_absSig := models.NewPair("rain rait- absolut signal")
-	rr_maxNeg := models.NewPair("rain rait- max negative signal")
-	rr_maxPoz := models.NewPair("rain rait- max pozitive signal")
-	rr_cloud := models.NewPair("rain rait- cloud type relation")
+	// rr_count := models.NewPair("rain rait- lightning count")
+	// rr_absSig := models.NewPair("rain rait- absolut signal")
+	// rr_maxNeg := models.NewPair("rain rait- max negative signal")
+	// rr_maxPoz := models.NewPair("rain rait- max pozitive signal")
+	// rr_cloud := models.NewPair("rain rait- cloud type relation")
 
 	pairs = append(pairs, ws_count)
 	pairs = append(pairs, ws_absSig)
@@ -237,16 +235,16 @@ func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 	pairs = append(pairs, r_maxNeg)
 	pairs = append(pairs, r_maxPoz)
 	pairs = append(pairs, r_cloud)
-	pairs = append(pairs, rr_count)
-	pairs = append(pairs, rr_absSig)
-	pairs = append(pairs, rr_maxNeg)
-	pairs = append(pairs, rr_maxPoz)
-	pairs = append(pairs, rr_cloud)
+	// pairs = append(pairs, rr_count)
+	// pairs = append(pairs, rr_absSig)
+	// pairs = append(pairs, rr_maxNeg)
+	// pairs = append(pairs, rr_maxPoz)
+	// pairs = append(pairs, rr_cloud)
 
 	for _, cp := range corrs {
 
-		if cp.Count() > 0 {
-			if cp.MaxRain > 0.01 {
+		if cp.Count() >= 0 {
+			if cp.MaxRain > 1 {
 				r_count.AddPair(cp.MaxRain, float64(cp.Count()))
 				r_absSig.AddPair(cp.MaxRain, cp.AbsSig())
 				r_maxNeg.AddPair(cp.MaxRain, float64(cp.MaxNegSig()))
@@ -254,32 +252,40 @@ func (s *ScienceService) CalculateCorr(ctx context.Context) ([]string, error) {
 				r_cloud.AddPair(cp.MaxRain, cp.CloudTypeRel())
 			}
 
-			if cp.HiSpeed > 2.5 {
+			if cp.HiSpeed >= 0 {
 				hws_count.AddPair(cp.HiSpeed, float64(cp.Count()))
 				hws_absSig.AddPair(cp.HiSpeed, cp.AbsSig())
 				hws_maxNeg.AddPair(cp.HiSpeed, float64(cp.MaxNegSig()))
 				hws_maxPoz.AddPair(cp.HiSpeed, float64(cp.MaxPozSig()))
 				hws_cloud.AddPair(cp.HiSpeed, cp.CloudTypeRel())
 			}
-			if cp.WindSpeed > 0.25 {
+			if cp.WindSpeed >= 0 {
 				ws_count.AddPair(cp.WindSpeed, float64(cp.Count()))
 				ws_absSig.AddPair(cp.WindSpeed, cp.AbsSig())
 				ws_maxNeg.AddPair(cp.WindSpeed, float64(cp.MaxNegSig()))
 				ws_maxPoz.AddPair(cp.WindSpeed, float64(cp.MaxPozSig()))
 				ws_cloud.AddPair(cp.WindSpeed, cp.CloudTypeRel())
 			}
-			if cp.MaxRainRate > 1 {
-				rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
-				rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
-				rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
-				rr_maxPoz.AddPair(cp.MaxRainRate, float64(cp.MaxPozSig()))
-				rr_cloud.AddPair(cp.MaxRainRate, cp.CloudTypeRel())
-			}
+			// if cp.MaxRainRate > 1 {
+			// 	rr_count.AddPair(cp.MaxRainRate, float64(cp.Count()))
+			// 	rr_absSig.AddPair(cp.MaxRainRate, cp.AbsSig())
+			// 	rr_maxNeg.AddPair(cp.MaxRainRate, float64(cp.MaxNegSig()))
+			// 	rr_maxPoz.AddPair(cp.MaxRainRate, float64(cp.MaxPozSig()))
+			// 	rr_cloud.AddPair(cp.MaxRainRate, cp.CloudTypeRel())
+			// }
 		}
 	}
 
 	for _, el := range pairs {
 		el.Calculate()
+		err := el.OutputData()
+		if err != nil {
+			fmt.Println(err)
+		}
+		// err = el.OutputData2()
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
 	}
 
 	sort.SliceStable(pairs, func(i, j int) bool {

@@ -63,7 +63,7 @@ func (mdb *MeteoDB) SaveMeteoData(ctx context.Context, data []models.MeteoData) 
 	return nil
 }
 
-func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (*models.MeteoParams, error) {
+func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Station, t time.Time, dur time.Duration) (models.MeteoParams, error) {
 
 	op := "storage/postgres/MeteoData.StationMeteoParamsByTime"
 
@@ -79,7 +79,7 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 		maxWindSpeed, maxRain, maxRainRate sql.NullFloat64
 	)
 	if err := row.Scan(&count, &windSpeed, &rain, &rainRate, &maxWindSpeed, &maxRain, &maxRainRate); err != nil {
-		return nil, fmt.Errorf("%s %w", op, err)
+		return mp, fmt.Errorf("%s %w", op, err)
 	}
 
 	if windSpeed.Valid {
@@ -102,10 +102,10 @@ func (mdb *MeteoDB) StationMeteoParamsByTime(ctx context.Context, st models.Stat
 	}
 
 	if count == 0 {
-		return nil, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
+		return mp, fmt.Errorf("%s %w", op, storage.ErrNoDataFound)
 	}
 
-	return &mp, nil
+	return mp, nil
 }
 
 func (mdb *MeteoDB) StationDataTimes(ctx context.Context, st models.Station) (time.Time, time.Time, error) {

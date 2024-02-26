@@ -39,7 +39,7 @@ func (sdb *StationsDB) Stations(ctx context.Context) ([]models.Station, error) {
 
 	stations := make([]models.Station, 0, 7)
 
-	rows, err := sdb.db.QueryContext(ctx, `select name,lat,long from stations`)
+	rows, err := sdb.db.QueryContext(ctx, `select name,lat,long,station_id from stations where  type ='rosgidromet' and lat > 42 and lat < 47 and long > 37 and  long<46;`)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, storage.ErrNoDataFound
@@ -55,15 +55,17 @@ func (sdb *StationsDB) Stations(ctx context.Context) ([]models.Station, error) {
 		var (
 			name      string
 			lat, long float64
+			id        int64
 		)
 
-		if err := rows.Scan(&name, &lat, &long); err != nil {
+		if err := rows.Scan(&name, &lat, &long, &id); err != nil {
 			sdb.log.Error(op, sl.Err(err))
 		}
 
 		s.SetName(name)
 		s.SetLat(lat)
 		s.SetLong(long)
+		s.SetStationID(id)
 
 		stations = append(stations, s)
 	}
